@@ -1,0 +1,60 @@
+TEMPLATE = lib
+TARGET = RobotKinematics
+
+QT += core
+QT -= gui
+
+CONFIG += staticlib c++17 warn_on
+
+INCLUDEPATH += \
+    $$PWD/../include \
+    $$PWD/../third_party/eigen
+
+DESTDIR = $$OUT_PWD/../lib
+OBJECTS_DIR = $$OUT_PWD/.obj
+MOC_DIR = $$OUT_PWD/.moc
+RCC_DIR = $$OUT_PWD/.rcc
+UI_DIR = $$OUT_PWD/.ui
+
+SOURCES += \
+    Adapters/DhAdapter.cpp \
+    Adapters/UrdfAdapter.cpp \
+    Core/LibraryAnchor.cpp \
+    Core/Pose.cpp \
+    Core/Units.cpp \
+    Kinematics/ForwardKinematics.cpp \
+    Kinematics/JointLimitValidator.cpp \
+    Kinematics/SerialRobotKinematics.cpp \
+    Model/SerialRobotConfigBuilder.cpp \
+    Model/RobotModelValidator.cpp \
+    Posture/PostureResolver.cpp \
+    Presets/PresetJsonLoader.cpp \
+    Presets/Virtual6DofTestArm.cpp \
+    Solvers/IKSolutionRanker.cpp \
+    Solvers/NumericalIKSolver.cpp
+
+HEADERS += \
+    ../include/RobotKinematics/Adapters/DhAdapter.h \
+    ../include/RobotKinematics/Adapters/UrdfAdapter.h \
+    ../include/RobotKinematics/Core/Ids.h \
+    ../include/RobotKinematics/Core/JointVector.h \
+    ../include/RobotKinematics/Core/Pose.h \
+    ../include/RobotKinematics/Core/Result.h \
+    ../include/RobotKinematics/Core/Units.h \
+    ../include/RobotKinematics/Kinematics/ForwardKinematics.h \
+    ../include/RobotKinematics/Kinematics/InverseKinematics.h \
+    ../include/RobotKinematics/Kinematics/JointLimitValidator.h \
+    ../include/RobotKinematics/Kinematics/RobotKinematics.h \
+    ../include/RobotKinematics/Kinematics/SerialRobotKinematics.h \
+    ../include/RobotKinematics/Model/FrameRegistry.h \
+    ../include/RobotKinematics/Model/RobotModelConfig.h \
+    ../include/RobotKinematics/Model/RobotModelValidator.h \
+    ../include/RobotKinematics/Model/SerialRobotConfigBuilder.h \
+    ../include/RobotKinematics/Model/ToolRegistry.h \
+    ../include/RobotKinematics/Posture/ArmPosture.h \
+    ../include/RobotKinematics/Posture/PostureResolver.h \
+    ../include/RobotKinematics/Presets/PresetJsonLoader.h \
+    ../include/RobotKinematics/Presets/Virtual6DofTestArm.h \
+    ../include/RobotKinematics/Solvers/IKSolutionRanker.h \
+    ../include/RobotKinematics/Solvers/IKSolver.h \
+    ../include/RobotKinematics/Solvers/NumericalIKSolver.h

@@ -1,0 +1,44 @@
+# --- Out-of-source build directories ---
+/build/
+/_build*/
+/lib/
+/agent-skills
+
+# --- qmake / make generated files (in-source) ---
+Makefile
+Makefile.Debug
+Makefile.Release
+.qmake.stash
+.qmake.cache
+.qmake.super
+
+# --- Per-target build subdirectories ---
+.obj/
+.moc/
+.rcc/
+.ui/
+debug/
+release/
+
+# --- Compiled objects / binaries ---
+*.o
+*.obj
+*.lib
+*.a
+*.dll
+*.exe
+*.pdb
+*.ilk
+*.exp
+
+# --- Qt moc/rcc/uic outputs ---
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.moc
+
+# --- Qt Creator user/session files ---
+*.pro.user
+*.pro.user.*
+.qtcreator/

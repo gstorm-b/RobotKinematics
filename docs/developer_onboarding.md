@@ -1,0 +1,210 @@
+# Developer Onboarding: RobotKinematics
+
+## What We Are Building
+
+RobotKinematics is a reusable C++ backend library for industrial robot kinematics.
+
+It will let developer engineers:
+
+- define or load a robot model;
+- compute forward kinematics;
+- solve inverse kinematics;
+- validate joint limits;
+- configure base/user/tool frames;
+- load custom robot presets;
+- choose IK solutions using seed, previous joint state, posture, and options.
+
+The first milestone is not a real robot integration. It is a base implementation verified with a project-owned virtual serial 6DOF robot named `Virtual6DofTestArm`.
+
+## What To Read First
+
+Read in this order:
+
+1. `README.md` for the quick project summary.
+2. `docs/robot_kinematics_spec.md` for the contract.
+3. `docs/robot_kinematics_implementation_plan.md` for task order.
+4. `docs/robot_preset_json_schema.md` for preset format.
+5. `AGENTS.md` if you are using AI agents to implement tasks.
+
+## Current Milestone
+
+Base code milestone:
+
+- Qt 6/qmake C++ library.
+- Eigen math.
+- Qt Test.
+- MSVC primary compiler.
+- MinGW compatibility compiler.
+- Core model for serial 6DOF robots.
+- FK, numerical IK, frames, tools, joint limits.
+- Posture metadata and posture-aware IK selection.
+- JSON preset loading.
+- Built-in C++ fallback preset.
+- `Virtual6DofTestArm` integration tests.
+
+Real robot presets for Kawasaki RS007N and Nachi MZ04D come after verified source data is provided.
+
+Current implementation status:
+
+- Phase 0 Qt/qmake static library scaffold exists.
+- Qt Test runner exists at `tests/RobotKinematicsTests.exe` after build.
+- Phase 1 core types exist for units, `Pose`, canonical serial model config, `KinematicsStatus`, and serial model validation.
+- Phase 2 exists for joint vectors, joint-limit validation, frame/tool registries, and FK, and has been verified with the MSVC build/test flow.
+- Phase 3 exists for IK API types, adaptive damped least-squares numerical IK, and `SerialRobotKinematics::solve/solveAll` orchestration.
+- Phase 4 exists for generic posture metadata, a metadata-gated serial 6DOF posture resolver, posture-derived seed expansion, and posture-aware IK scoring/rejection.
+- Phase 5 exists for custom config building, preset JSON loading, and `Virtual6DofTestArm` as both JSON and built-in C++ fallback.
+- Phase 6 real presets are blocked until verified Kawasaki RS007N and Nachi MZ04D source data is provided.
+- Phase 7 exists for standard DH import to canonical config and URDF-like export/import. Modified DH remains a later adapter extension.
+- Phase 8 analytic IK capability detection is the next implementation phase.
+
+## Key Architecture Decisions
+
+### Canonical Model
+
+The internal model is URDF-like:
+
+- links;
+- joints;
+- joint origin transforms;
+- joint axes;
+- joint limits;
+- base/flange frames;
+- tool and user frames;
+- solver metadata;
+- posture metadata.
+
+URDF and DH/Modified DH are adapter formats. They are not the internal source of truth.
+
+### Units
+
+Core values use SI units:
+
+- meter for length;
+- radian for angle.
+
+Helpers may accept or return millimeter/degree, but helper names must make the unit explicit. Do not perform implicit unit conversion.
+
+### Pose
+
+Core pose uses a `Pose` wrapper backed by `Eigen::Isometry3d`.
+
+RPY/Euler, quaternion, XYZABC, and XYZRPY are helper/IO formats only. RPY convention must be documented and tested.
+
+### IK
+
+The first numerical IK method is adaptive damped least squares.
+
+Default targets:
+
+- position residual `<= 1e-6 m`;
+- orientation residual `<= 1.7453292519943296e-5 rad`.
+
+`solve` returns one best solution by policy.
+
+`solveAll` returns all solutions found by the selected solver. For numerical IK, this is not a mathematical exhaustive guarantee.
+
+### Presets
+
+Preset files use JSON schema `robot-kinematics-preset/v1`.
+
+The first preset is `Virtual6DofTestArm`. It exists to validate library behavior before real vendor data is available.
+
+Kawasaki RS007N and Nachi MZ04D should be added only after source dimensions, joint limits, and posture rules are provided.
+
+## Planned Source Layout
+
+```text
+include/
+  RobotKinematics/
+    Core/
+    Model/
+    Kinematics/
+    Solvers/
+    Posture/
+    Presets/
+    Adapters/
+
+src/
+  Core/
+  Model/
+  Kinematics/
+  Solvers/
+  Posture/
+  Presets/
+  Adapters/
+
+presets/
+  virtual_6dof_test_arm.json
+
+tests/
+  unit/
+  integration/
+  fixtures/
+```
+
+## Build And Test
+
+Expected MSVC flow:
+
+```powershell
+qmake RobotKinematics.pro
+nmake
+.\tests\RobotKinematicsTests.exe
+```
+
+Expected MinGW compatibility flow:
+
+```powershell
+qmake RobotKinematics.pro
+mingw32-make
+.\tests\RobotKinematicsTests.exe
+```
+
+## How To Pick Up Work
+
+Use `docs/robot_kinematics_implementation_plan.md`.
+
+Pick the first incomplete task whose dependencies are complete. Keep the change small enough to review in one focused session.
+
+Good initial task order:
+
+1. Scaffold qmake library and Qt Test target.
+2. Implement units helpers.
+3. Implement `Pose`.
+4. Implement canonical model types.
+5. Implement model validation.
+6. Implement joint vector and joint limits.
+7. Implement frame/tool registry.
+8. Implement FK.
+9. Implement IK API and statuses.
+10. Implement numerical IK.
+11. Implement posture/ranking.
+12. Implement JSON loader and `Virtual6DofTestArm`.
+
+## Definition Of Done
+
+A task is done when:
+
+- it satisfies the task acceptance criteria;
+- relevant unit/integration tests exist;
+- relevant tests pass locally;
+- public API changes are documented;
+- spec/plan/schema docs are updated if behavior changed;
+- no unrelated scope was added.
+
+The base milestone is done when `Virtual6DofTestArm` passes FK/IK/frame/tool/joint-limit/posture tests and the library builds with MSVC.
+
+Current IK limitation: request reference frames are supported when empty/base or when a user frame is fixed to the base link. User frames attached to moving links return `InvalidRequest` for IK because their base-relative transform depends on the unknown joint vector.
+
+Canonical serial configs may contain fixed joints for adapter-generated link transforms. `SerialRobotConfig::dof` counts movable joints, and validation enforces movable joint count rather than total joint count.
+
+## Common Mistakes To Avoid
+
+- Do not use millimeter/degree internally.
+- Do not store RPY as the internal pose truth.
+- Do not make URDF the core model.
+- Do not claim physical robot accuracy.
+- Do not treat numerical `solveAll` as exhaustive.
+- Do not implement real Kawasaki/Nachi presets without source references.
+- Do not put robot-specific preset data inside generic solver code.
+- Do not expand to SCARA, delta, parallel, or analytic IK before the base milestone.
