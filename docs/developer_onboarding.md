@@ -42,7 +42,7 @@ Base code milestone:
 - Built-in C++ fallback preset.
 - `Virtual6DofTestArm` integration tests.
 
-Real robot presets for Kawasaki RS007N and Nachi MZ04D come after verified source data is provided.
+`NachiMZ04D` has since been implemented from teach-pendant reference data. `KawasakiRS007N` remains blocked until verified source data is provided; see `docs/preset_references/kawasaki-rs007n.md`.
 
 Current implementation status:
 
@@ -53,9 +53,9 @@ Current implementation status:
 - Phase 3 exists for IK API types, adaptive damped least-squares numerical IK, and `SerialRobotKinematics::solve/solveAll` orchestration.
 - Phase 4 exists for generic posture metadata, a metadata-gated serial 6DOF posture resolver, posture-derived seed expansion, and posture-aware IK scoring/rejection.
 - Phase 5 exists for custom config building, preset JSON loading, and `Virtual6DofTestArm` as both JSON and built-in C++ fallback.
-- Phase 6 real presets are blocked until verified Kawasaki RS007N and Nachi MZ04D source data is provided.
+- Phase 6 real presets: Nachi MZ04D is implemented from teach-pendant data; Kawasaki RS007N remains blocked until verified source data is provided.
 - Phase 7 exists for standard DH import to canonical config and URDF-like export/import. Modified DH remains a later adapter extension.
-- Phase 8 analytic IK capability detection is the next implementation phase.
+- Phase 8 analytic IK capability detection and spherical-wrist analytic IK are implemented for supported morphologies.
 
 ## Key Architecture Decisions
 
@@ -98,6 +98,9 @@ Default targets:
 
 - position residual `<= 1e-6 m`;
 - orientation residual `<= 1.7453292519943296e-5 rad`.
+- joint-vector round-trip comparison `<= 1.7453292519943296e-6 rad` (`0.0001 degree`) per revolute joint when an expected joint vector is asserted.
+
+Tests based on teach-pendant/reference coordinates rounded to 2 decimal places may relax joint-vector comparison to `<= 1.7453292519943296e-5 rad` (`0.001 degree`) per revolute joint, but must document the source precision. This exception does not relax the TCP position/orientation residual criteria.
 
 `solve` returns one best solution by policy.
 
@@ -109,7 +112,7 @@ Preset files use JSON schema `robot-kinematics-preset/v1`.
 
 The first preset is `Virtual6DofTestArm`. It exists to validate library behavior before real vendor data is available.
 
-Kawasaki RS007N and Nachi MZ04D should be added only after source dimensions, joint limits, and posture rules are provided.
+Nachi MZ04D is available as a real preset. Kawasaki RS007N should be added only after source dimensions, joint limits, and posture rules are provided.
 
 ## Planned Source Layout
 
@@ -147,17 +150,21 @@ tests/
 Expected MSVC flow:
 
 ```powershell
-qmake RobotKinematics.pro
-nmake
-.\tests\RobotKinematicsTests.exe
+scripts\build_msvc.bat
+scripts\test_msvc.bat
+```
+
+Clean MSVC rebuild plus tests:
+
+```powershell
+scripts\rebuild_msvc.bat
 ```
 
 Expected MinGW compatibility flow:
 
 ```powershell
-qmake RobotKinematics.pro
-mingw32-make
-.\tests\RobotKinematicsTests.exe
+scripts\build_mingw.bat
+scripts\test_mingw.bat
 ```
 
 ## How To Pick Up Work
@@ -205,6 +212,6 @@ Canonical serial configs may contain fixed joints for adapter-generated link tra
 - Do not make URDF the core model.
 - Do not claim physical robot accuracy.
 - Do not treat numerical `solveAll` as exhaustive.
-- Do not implement real Kawasaki/Nachi presets without source references.
+- Do not implement Kawasaki RS007N without source references.
 - Do not put robot-specific preset data inside generic solver code.
 - Do not expand to SCARA, delta, parallel, or analytic IK before the base milestone.

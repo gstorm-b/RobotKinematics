@@ -6,9 +6,12 @@ The library will support forward kinematics, inverse kinematics, joint-limit val
 
 ## Current Status
 
-The project is in early implementation. Phase 0 has scaffolded the Qt/qmake library project and Qt Test executable. Phase 1 core types are implemented: unit helpers, `Pose`, canonical serial robot model value types, `KinematicsStatus`, and serial model validation. Phase 2 is implemented and MSVC-verified: joint vectors, joint-limit validation, frame/tool registries, and forward kinematics. Phase 3 has IK API types, an adaptive damped least-squares numerical solver, and `SerialRobotKinematics::solve/solveAll` orchestration with frame/tool resolution. Phase 4 has generic posture metadata, a metadata-gated serial 6DOF posture resolver, and posture-aware IK scoring/rejection. Phase 5 has custom config building, preset JSON loading, and the `Virtual6DofTestArm` JSON plus C++ fallback. Phase 7 has standard DH import to canonical config and URDF-like export/import adapters.
+The base serial 6DOF library milestone is implemented. The codebase includes the Qt/qmake static library, Qt Test runner, core units and `Pose`, canonical serial robot model, model validation, joint-limit validation, frame/tool registries, FK, numerical IK, posture-aware solution selection, JSON preset loading, `Virtual6DofTestArm`, standard DH import, URDF-like import/export, and a hybrid analytic IK plugin for supported spherical-wrist 6R robots.
 
-The first engineering milestone is the base serial 6DOF implementation using a project-owned virtual preset named `Virtual6DofTestArm`. Real robot presets for Kawasaki RS007N and Nachi MZ04D are validation targets after verified source data is provided.
+Real preset status:
+
+- `NachiMZ04D` is implemented from teach-pendant reference data in [docs/preset_references/nachi-mz04d.md](docs/preset_references/nachi-mz04d.md), with JSON and C++ fallback presets.
+- `KawasakiRS007N` is not implemented yet. Task 6.1 remains blocked until verified dimensions, joint limits, posture rules, and source references are provided. See [docs/preset_references/kawasaki-rs007n.md](docs/preset_references/kawasaki-rs007n.md).
 
 ## Start Here
 
@@ -19,6 +22,10 @@ Read these files in order:
 3. [Preset JSON Schema](docs/robot_preset_json_schema.md)
 4. [Developer Onboarding](docs/developer_onboarding.md)
 5. [Agent Instructions](AGENTS.md), if you are an AI/code agent working on this repo
+
+If you want to **use RobotKinematics as a library** (rather than work on it), see the
+[Developer Guide](docs/developer-guide/README.md) — building/linking, usage examples, an API
+reference, conventions/gotchas, and architecture decision records.
 
 ## Core Decisions
 
@@ -49,7 +56,7 @@ The first milestone is complete when:
 
 Current IK limitation: numerical `solveAll` returns found solutions from deterministic seeds, not a mathematically exhaustive branch set. IK reference user frames must currently be fixed to the base link.
 
-Real Kawasaki RS007N and Nachi MZ04D presets are still blocked until verified dimensions, joint limits, posture rules, and source references are provided.
+Kawasaki RS007N remains blocked until verified dimensions, joint limits, posture rules, and source references are provided. Nachi MZ04D is implemented, with documented caveats around posture-source confidence.
 
 Canonical serial configs may contain fixed joints; `dof` counts movable joints only.
 
@@ -58,12 +65,22 @@ Canonical serial configs may contain fixed joints; `dof` counts movable joints o
 From the repository root:
 
 ```powershell
-qmake RobotKinematics.pro
-nmake
-.\tests\RobotKinematicsTests.exe
+scripts\build_msvc.bat
+scripts\test_msvc.bat
 ```
 
-For MinGW, use `mingw32-make` instead of `nmake`.
+For a clean MSVC rebuild plus tests:
+
+```powershell
+scripts\rebuild_msvc.bat
+```
+
+For MinGW compatibility:
+
+```powershell
+scripts\build_mingw.bat
+scripts\test_mingw.bat
+```
 
 ## Non-Goals For The First Milestone
 
@@ -73,4 +90,4 @@ For MinGW, use `mingw32-make` instead of `nmake`.
 - No path planning.
 - No SCARA, delta, parallel, 4DOF, or 5DOF implementation.
 - No exhaustive guarantee for numerical `solveAll`.
-- No real Kawasaki/Nachi preset implementation until source data is provided.
+- No Kawasaki RS007N preset implementation until source data is provided.

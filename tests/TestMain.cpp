@@ -19,6 +19,8 @@ int runPostureResolverTests(int argc, char** argv);
 int runCustomPresetTests(int argc, char** argv);
 int runIKIntegrationTests(int argc, char** argv);
 int runVirtual6DofTestArmTests(int argc, char** argv);
+int runNachiMZ04DTests(int argc, char** argv);
+int runAnalyticIKSolverTests(int argc, char** argv);
 int runUrdfAdapterTests(int argc, char** argv);
 
 namespace {
@@ -55,6 +57,8 @@ int main(int argc, char** argv)
     status |= runSuite("CustomPresetTests", runCustomPresetTests, argc, argv);
     status |= runSuite("IKIntegrationTests", runIKIntegrationTests, argc, argv);
     status |= runSuite("Virtual6DofTestArmTests", runVirtual6DofTestArmTests, argc, argv);
+    status |= runSuite("NachiMZ04DTests", runNachiMZ04DTests, argc, argv);
+    status |= runSuite("AnalyticIKSolverTests", runAnalyticIKSolverTests, argc, argv);
     status |= runSuite("UrdfAdapterTests", runUrdfAdapterTests, argc, argv);
     return status;
 }

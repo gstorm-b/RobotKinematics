@@ -30,8 +30,10 @@ SOURCES += \
     Posture/PostureResolver.cpp \
     Presets/PresetJsonLoader.cpp \
     Presets/Virtual6DofTestArm.cpp \
+    Presets/NachiMZ04D.cpp \
     Solvers/IKSolutionRanker.cpp \
-    Solvers/NumericalIKSolver.cpp
+    Solvers/NumericalIKSolver.cpp \
+    Solvers/Analytic6DofSphericalWristSolver.cpp
 
 HEADERS += \
     ../include/RobotKinematics/Adapters/DhAdapter.h \
@@ -55,6 +57,9 @@ HEADERS += \
     ../include/RobotKinematics/Posture/PostureResolver.h \
     ../include/RobotKinematics/Presets/PresetJsonLoader.h \
     ../include/RobotKinematics/Presets/Virtual6DofTestArm.h \
+    ../include/RobotKinematics/Presets/NachiMZ04D.h \
     ../include/RobotKinematics/Solvers/IKSolutionRanker.h \
     ../include/RobotKinematics/Solvers/IKSolver.h \
-    ../include/RobotKinematics/Solvers/NumericalIKSolver.h
+    ../include/RobotKinematics/Solvers/NumericalIKSolver.h \
+    ../include/RobotKinematics/Solvers/AnalyticIKSolver.h \
+    ../include/RobotKinematics/Solvers/Analytic6DofSphericalWristSolver.h

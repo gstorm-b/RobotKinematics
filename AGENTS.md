@@ -16,9 +16,9 @@ Do not infer missing project decisions from general robotics conventions when th
 
 ## Current Project State
 
-The project is in early implementation. Phase 0 and Phase 1 are implemented: the repository has a Qt/qmake static library scaffold, Qt Test runner, unit helpers, `Pose`, canonical serial robot model value types, `KinematicsStatus`, and serial model validation.
+The base serial 6DOF implementation is largely complete. The repository has a Qt/qmake static library, Qt Test runner, units, `Pose`, canonical serial model, validation, joint limits, frame/tool registries, FK, numerical IK, posture-aware ranking, JSON preset loading, `Virtual6DofTestArm`, Nachi MZ04D, DH/URDF adapters, and a hybrid analytic IK plugin for supported spherical-wrist 6R robots.
 
-The next implementation target is Phase 2: joint vectors, joint limits, frame/tool registry behavior, and FK. Kawasaki RS007N and Nachi MZ04D must wait until the user provides verified dimensions, joint limits, and posture rules.
+Task 6.1, Kawasaki RS007N, remains blocked until the user provides verified dimensions, joint limits, posture rules, and source references. Do not invent Kawasaki data.
 
 ## Implementation Order
 
@@ -30,9 +30,11 @@ Follow `docs/robot_kinematics_implementation_plan.md` in dependency order:
 4. Phase 3: IK API and numerical IK.
 5. Phase 4: posture and solution ranking.
 6. Phase 5: preset JSON loader and `Virtual6DofTestArm`.
-7. Phase 6: real presets only after source data is available.
+7. Phase 6: real presets; Nachi MZ04D is implemented, Kawasaki RS007N is blocked on source data.
+8. Phase 7: DH/URDF adapters.
+9. Phase 8: analytic IK plugin.
 
-Do not start adapters, analytic IK, or real robot presets before the base milestone is working unless the user explicitly changes scope.
+Do not expand into new robot families or Kawasaki RS007N before the required source data exists unless the user explicitly changes scope.
 
 ## Hard Invariants
 
@@ -92,6 +94,8 @@ Accuracy targets for normal non-singular fixtures:
 
 - Position residual: `<= 1e-6 m`.
 - Orientation residual: `<= 1.7453292519943296e-5 rad` (`0.001 degree`).
+- Joint-vector round-trip comparison, when comparing expected revolute joints: `<= 1.7453292519943296e-6 rad` (`0.0001 degree`) per joint by default.
+- Teach-pendant/reference fixtures whose expected coordinates are rounded to 2 decimal places may use `<= 1.7453292519943296e-5 rad` (`0.001 degree`) per joint, but the test must document the source precision and why the relaxed tolerance is used.
 
 Do not apply those tolerances to singularities, joint-limit boundaries, or intentionally unreachable targets unless the test is specifically about failure handling.
 
@@ -120,11 +124,11 @@ Ask the user before:
 - Implementing SCARA, delta, parallel, 4DOF, or 5DOF support.
 - Making URDF the canonical model.
 - Moving analytic IK into the first milestone.
-- Implementing Kawasaki/Nachi data without source references.
+- Implementing Kawasaki data without source references.
 
-## Good First Tasks
+## Good Follow-Up Tasks
 
-If starting from the current implementation, continue with Phase 2 from the plan. If no code exists in another checkout, start with:
+If starting from the current implementation, first run the current build/test scripts and check `docs/robot_kinematics_implementation_plan.md` for remaining unchecked items. If no code exists in another checkout, start with:
 
 1. Scaffold `RobotKinematics.pro` and test target.
 2. Add `include/`, `src/`, `tests/`, and `presets/` directories.

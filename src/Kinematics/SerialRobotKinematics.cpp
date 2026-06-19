@@ -3,6 +3,7 @@
 #include <RobotKinematics/Model/FrameRegistry.h>
 #include <RobotKinematics/Model/RobotModelValidator.h>
 #include <RobotKinematics/Model/ToolRegistry.h>
+#include <RobotKinematics/Solvers/Analytic6DofSphericalWristSolver.h>
 #include <RobotKinematics/Solvers/NumericalIKSolver.h>
 
 #include <Eigen/Geometry>
@@ -77,6 +78,17 @@ IKResult SerialRobotKinematics::run(const IKRequest& request, bool allSolutions)
     IKSolveContext context;
     context.request = request;
     context.targetFlangeInBase = baseFromReference.value * request.targetPose * tool.value.flangeToTcp.inverse();
+
+    // Hybrid policy: use the analytic plugin when it supports the model and returns a
+    // solution; otherwise fall back to the numerical solver.
+    const Analytic6DofSphericalWristSolver analytic;
+    if (analytic.supportsModel(config_)) {
+        const IKResult analyticResult =
+            allSolutions ? analytic.solveAll(config_, context) : analytic.solve(config_, context);
+        if (analyticResult.ok()) {
+            return analyticResult;
+        }
+    }
 
     const NumericalIKSolver solver;
     return allSolutions ? solver.solveAll(config_, context) : solver.solve(config_, context);

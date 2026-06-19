@@ -204,7 +204,7 @@ Adapters: DH/URDF
 - [x] Build compatibility is checked with MinGW before release.
 - [x] Unit tests for units, pose, model, and validation pass.
 - [x] No spec contract update needed for the implemented model fields.
-- [ ] Human review before implementing FK.
+- [X] Human review before implementing FK.
 
 ## Phase 2: FK, Joint Limits, Frames, And Tools
 
@@ -327,6 +327,7 @@ Adapters: DH/URDF
 - [x] Unit tests run numerical IK on simple serial fixtures.
 - [x] Residual position error <= `1e-6 m` for selected non-singular cases.
 - [x] Residual orientation error <= `0.001 degree` for selected non-singular cases.
+- [x] Joint-vector round-trip comparisons use <= `0.0001 degree` per revolute joint by default; tests using teach-pendant/reference coordinates rounded to 2 decimal places may use <= `0.001 degree` and must document that exception.
 
 **Dependencies:** Task 3.1.
 
@@ -458,7 +459,7 @@ Adapters: DH/URDF
 - [x] Preset includes finite joint limits, home position, base frame, one user frame, default tool, and one non-default test tool.
 - [x] Lefty/righty, above/below, and flip/non-flip posture classification is supported.
 - [x] FK tests pass against deterministic fixture values.
-- [x] IK round-trip tests pass for selected non-singular poses generated from FK.
+- [x] IK round-trip tests pass for selected non-singular poses generated from FK, using the default joint-angle comparison tolerance of <= `0.0001 degree` per revolute joint when comparing to an expected joint vector.
 - [x] JSON loader and C++ fallback produce equivalent canonical configs.
 
 **Verification:**
@@ -499,7 +500,7 @@ Adapters: DH/URDF
 - [ ] Source references for dimensions, joint limits, and posture definitions are recorded where available.
 - [ ] Lefty/righty, above/below, and flip/non-flip posture classification is supported.
 - [ ] FK tests pass against expected fixture values.
-- [ ] IK round-trip tests pass for selected non-singular poses.
+- [ ] IK round-trip tests pass for selected non-singular poses. Joint-vector comparisons use <= `0.0001 degree` per revolute joint by default, or <= `0.001 degree` only when the expected coordinate source is teach-pendant/reference data rounded to 2 decimal places and the test documents that source precision.
 
 **Verification:**
 - [ ] Preset integration tests pass.
@@ -519,19 +520,19 @@ Adapters: DH/URDF
 
 **Description:** Add Nachi MZ04D after source dimensions, joint limits, and posture rules are provided.
 
-**Status:** Blocked. Do not implement until verified dimensions, joint limits, posture rules, and source references are provided.
+**Status:** Implemented from teach-pendant data (docs/preset_references/nachi-mz04d.md): kinematics, joint limits, and posture (shoulder/wrist + elbow below-side confirmed by ground-truth Arm-config set; elbow above-side inferred). FK verified for 21 flange poses and 4 tool-offset TCP poses.
 
 **Acceptance criteria:**
-- [ ] Preset creates a valid serial 6DOF config.
-- [ ] Preset is available as JSON.
-- [ ] Preset has built-in C++ fallback.
-- [ ] Source references for dimensions, joint limits, and posture definitions are recorded where available.
-- [ ] Lefty/righty, above/below, and flip/non-flip posture classification is supported.
-- [ ] FK tests pass against expected fixture values.
-- [ ] IK round-trip tests pass for selected non-singular poses.
+- [x] Preset creates a valid serial 6DOF config.
+- [x] Preset is available as JSON.
+- [x] Preset has built-in C++ fallback.
+- [x] Source references for dimensions and joint limits are recorded; posture source still pending.
+- [x] Lefty/righty, above/below, and flip/non-flip posture classification is supported (Nachi-manual mapping: shoulder=sign(J1), wrist=sign(J5), elbow=sign(J3); below/non-flip/lefty/righty confirmed by ground-truth Arm-config set, elbow above-side inferred).
+- [x] FK tests pass against expected fixture values (21 teach-pendant poses, <= 0.035 mm / 0.010 deg).
+- [x] IK round-trip tests pass for selected non-singular poses. Expected joint-vector comparisons should use <= `0.0001 degree` per revolute joint unless a specific fixture depends on teach-pendant/reference coordinates rounded to 2 decimal places; those fixtures may use <= `0.001 degree` with an inline explanation.
 
 **Verification:**
-- [ ] Preset integration tests pass.
+- [x] Preset integration tests pass.
 
 **Dependencies:** Task 5.2 and source data from the user.
 
@@ -546,13 +547,13 @@ Adapters: DH/URDF
 
 ### Checkpoint: Real Presets
 
-- [ ] Library builds.
-- [ ] All unit tests pass.
-- [ ] All preset integration tests pass.
-- [ ] Accuracy criteria are met for normal non-singular fixtures.
-- [ ] Real preset source references are recorded.
-- [ ] Documentation explains real preset limitations and source references.
-- [x] Kawasaki RS007N and Nachi MZ04D implementation remains blocked pending verified source data.
+- [x] Library builds.
+- [x] All unit tests pass.
+- [x] All preset integration tests pass (Nachi MZ04D).
+- [x] Accuracy criteria are met for normal non-singular fixtures (MZ04D FK <= 0.035 mm / 0.01 deg).
+- [x] Real preset source references are recorded (Nachi MZ04D).
+- [x] Documentation explains real preset limitations and source references (Nachi MZ04D).
+- [x] Kawasaki RS007N remains blocked pending verified source data; Nachi MZ04D is implemented.
 
 ## Phase 7: Adapters
 
@@ -627,11 +628,11 @@ Adapters: DH/URDF
 **Description:** Let solvers declare whether they support a given robot morphology.
 
 **Acceptance criteria:**
-- [ ] Solver can return supported/unsupported for model config.
-- [ ] Unsupported analytic solver falls back to numerical solver if configured.
+- [x] Solver can return supported/unsupported for model config.
+- [x] Unsupported analytic solver falls back to numerical solver if configured.
 
 **Verification:**
-- [ ] Unit tests cover supported and unsupported capability checks.
+- [x] Unit tests cover supported and unsupported capability checks.
 
 **Dependencies:** Phase 5.
 
@@ -647,12 +648,16 @@ Adapters: DH/URDF
 **Description:** Add analytic IK for supported 6DOF serial arms, likely spherical wrist morphology.
 
 **Acceptance criteria:**
-- [ ] Solver returns discrete branch solutions for supported models.
-- [ ] Posture/branch metadata maps to analytic solutions.
-- [ ] `solveAll` can declare stronger solution coverage for supported models.
+- [x] Solver returns discrete branch solutions for supported models (up to 8 for spherical-wrist articulated arms).
+- [x] Posture/branch metadata maps to analytic solutions (shoulder/elbow/wrist sign per branch).
+- [x] `solveAll` can declare stronger solution coverage for supported models (exhaustive closed-form branches).
 
 **Verification:**
-- [ ] Analytic IK tests compare all returned branches against FK residual.
+- [x] Analytic IK tests compare all returned branches against FK residual.
+
+**Note:** Supported morphology = articulated arm (J1 ⊥ J2, J2 ∥ J3, no shoulder offset) with a
+spherical wrist whose reduction is a proper Z–Y–Z Euler problem (validated against Nachi MZ04D
+to machine precision). Other morphologies report unsupported and fall back to the numerical solver.
 
 **Dependencies:** Task 8.1.
 
@@ -670,6 +675,7 @@ Adapters: DH/URDF
 | Preset dimensions or joint limits are wrong | High | Validate base behavior with Virtual6DofTestArm first; require source reference for each real preset value and fixture tests. |
 | `0.001 mm` IK tolerance is too strict for numerical solver | High | Apply only to normal non-singular test cases; track residuals; tune solver/options; document exclusions. |
 | `0.001 degree` orientation tolerance is too strict for some numerical cases | Medium | Apply to normal non-singular test cases; tune adaptive damping and residual weights; document exclusions. |
+| `0.0001 degree` joint round-trip tolerance is too strict for rounded teach-pendant fixtures | Medium | Use <= `0.0001 degree` for synthetic/generated fixtures; allow <= `0.001 degree` only when source coordinates are rounded to 2 decimal places and the test documents that precision limit. |
 | `solveAll` expectation becomes "mathematically all" | High | Document found-solutions semantics for numerical solver and exhaustive-only claim for analytic solvers. |
 | Unit confusion between mm/degree and m/radian | High | No implicit conversion; helper names include unit; tests cover conversions. |
 | RPY convention mismatch | Medium | Document exact convention; add tests with known rotations. |
@@ -704,7 +710,7 @@ Needs coordination:
 
 ## Open Questions To Resolve Later
 
-- Exact source documents/config files for Kawasaki RS007N and Nachi MZ04D dimensions, joint limits, and posture definitions.
+- Exact source documents/config files for Kawasaki RS007N dimensions, joint limits, and posture definitions.
 
 ## Validation Follow-Ups
 

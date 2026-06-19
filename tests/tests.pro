@@ -34,11 +34,13 @@ SOURCES += \
     unit/IKSolutionRankerTests.cpp \
     unit/NumericalIKSolverTests.cpp \
     unit/PostureResolverTests.cpp \
+    unit/AnalyticIKSolverTests.cpp \
     unit/UrdfAdapterTests.cpp \
     integration/CustomPresetTests.cpp \
     integration/FrameToolFkTests.cpp \
     integration/IKIntegrationTests.cpp \
-    integration/Virtual6DofTestArmTests.cpp
+    integration/Virtual6DofTestArmTests.cpp \
+    integration/NachiMZ04DTests.cpp
 
 HEADERS += \
     unit/DhAdapterTests.h \
@@ -54,8 +56,10 @@ HEADERS += \
     unit/IKSolutionRankerTests.h \
     unit/NumericalIKSolverTests.h \
     unit/PostureResolverTests.h \
+    unit/AnalyticIKSolverTests.h \
     unit/UrdfAdapterTests.h \
     integration/CustomPresetTests.h \
     integration/FrameToolFkTests.h \
     integration/IKIntegrationTests.h \
-    integration/Virtual6DofTestArmTests.h
+    integration/Virtual6DofTestArmTests.h \
+    integration/NachiMZ04DTests.h

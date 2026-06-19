@@ -6,7 +6,7 @@ Build a reusable C++ backend library for industrial robot kinematics.
 
 The primary users are developer engineers integrating robot guidance, bin picking, remote control, and similar robotics applications. The library must let engineers define or load a robot model, configure frames/tools, compute forward kinematics, solve inverse kinematics, validate joint limits, and choose IK results using seed/posture/options.
 
-Phase 1 focuses on serial 6DOF industrial robots. The first implementation preset is a self-designed virtual serial 6DOF robot used to validate the base architecture, JSON schema, FK, IK, frames/tools, joint limits, and posture behavior before real vendor preset data is available. Kawasaki RS007N and Nachi MZ04D are real-preset validation targets after the base code is implemented and their source data is provided. The architecture must remain extensible for SCARA, parallel/delta, 4DOF, 5DOF, and other robot families, but those robot types are not implementation scope for the first phase.
+Phase 1 focuses on serial 6DOF industrial robots. The first implementation preset is a self-designed virtual serial 6DOF robot used to validate the base architecture, JSON schema, FK, IK, frames/tools, joint limits, and posture behavior before real vendor preset data is available. Nachi MZ04D is now implemented from teach-pendant reference data. Kawasaki RS007N remains a real-preset validation target after its source data is provided. The architecture must remain extensible for SCARA, parallel/delta, 4DOF, 5DOF, and other robot families, but those robot types are not implementation scope for the first phase.
 
 ## Users
 
@@ -49,19 +49,19 @@ Phase 1 focuses on serial 6DOF industrial robots. The first implementation prese
 ## Commands
 
 ```powershell
-# Generate Makefile
-qmake RobotKinematics.pro
+# Incremental MSVC build
+scripts\build_msvc.bat
 
-# Build
-nmake
+# Run tests
+scripts\test_msvc.bat
 
-# Run tests, if using Qt Test executable
-.\tests\RobotKinematicsTests.exe
+# Clean rebuild + tests
+scripts\rebuild_msvc.bat
 ```
 
 MSVC is the primary supported compiler. MinGW is a compatibility target and must be verified before release.
 
-If the project uses MinGW, replace `nmake` with `mingw32-make`.
+For MinGW compatibility, use `scripts\build_mingw.bat` and `scripts\test_mingw.bat`.
 
 ## Architecture Decisions
 
@@ -180,7 +180,7 @@ struct IKOptions {
     bool returnClosestToSeed = true;
     bool requirePosture = false;
     double maxPositionError_m = 1e-6;
-    double maxOrientationError_rad = 1e-6;
+    double maxOrientationError_rad = 1.7453292519943296e-5;
     int maxSolutions = 16;
 };
 
@@ -251,13 +251,13 @@ Phase 1 preset strategy:
 
 - `Virtual6DofTestArm`: required first implementation preset. This is a synthetic serial 6DOF robot designed by the project to exercise the canonical model, numerical IK, posture classification, frames/tools, JSON loading, and C++ fallback behavior.
 - `Kawasaki RS007N`: real-preset validation target after source data is provided.
-- `Nachi MZ04D`: real-preset validation target after source data is provided.
+- `Nachi MZ04D`: implemented real-preset validation target from teach-pendant reference data.
 
 Each preset must include enough data for FK, IK, joint limit validation, tool/frame behavior, and posture handling.
 
-For virtual presets, the source of truth is the project-owned preset spec and fixture tests. For real robot presets, the source of truth is vendor documentation or verified internal robot configuration. Each real preset JSON must include source references for dimensions, joint limits, and posture definitions where available.
+For virtual presets, the source of truth is the project-owned preset spec and fixture tests. For real robot presets, the source of truth is vendor documentation, verified internal robot configuration, or measured teach-pendant reference data. Each real preset JSON must include source references for dimensions, joint limits, and posture definitions where available.
 
-Presets are stored as JSON files so developers can add or customize robots without recompiling the library. `Virtual6DofTestArm` must have a built-in C++ fallback. Kawasaki RS007N and Nachi MZ04D should also have built-in C++ fallback presets once their real preset data is added.
+Presets are stored as JSON files so developers can add or customize robots without recompiling the library. `Virtual6DofTestArm` and `NachiMZ04D` have built-in C++ fallbacks. Kawasaki RS007N should also have a built-in C++ fallback once its real preset data is added.
 
 `Virtual6DofTestArm` requirements:
 
@@ -551,7 +551,7 @@ Conventions:
 
 - Virtual6DofTestArm preset FK/IK round-trip.
 - Kawasaki RS007N preset FK/IK round-trip after source data is provided.
-- Nachi MZ04D preset FK/IK round-trip after source data is provided.
+- Nachi MZ04D preset FK/IK round-trip.
 - Custom serial 6DOF preset can be built and solved.
 - `solve` selects the closest solution to seed/previous joint.
 - `solveAll` returns multiple found solutions when configured with multiple seeds.
@@ -566,9 +566,12 @@ Required phase 1 criteria:
 - IK pose residual: `FK(IK(targetPose))` must produce TCP position error <= `0.001 mm` (`1e-6 m`) for normal non-singular test poses.
 - Orientation error must be checked separately. Phase 1 target: <= `0.001 degree` (`1.7453292519943296e-5 rad`) for normal non-singular test poses.
 - Joint round-trip `joint -> FK -> IK -> joint` is required only when seed or posture constrains the solver to the original branch.
+- When a test compares an IK solution against an expected revolute-joint vector, the default per-joint angular tolerance is <= `0.0001 degree` (`1.7453292519943296e-6 rad`).
+- A relaxed per-joint angular tolerance of <= `0.001 degree` (`1.7453292519943296e-5 rad`) is allowed only for tests whose expected pose or coordinate source comes from teach-pendant/reference data rounded to 2 decimal places. Such tests must document the source precision and why the relaxed tolerance is used.
+- Joint-angle comparison tolerance is separate from TCP pose residual tolerance. Do not loosen pose residual criteria just because a joint-vector comparison uses the teach-pendant exception.
 - Tests must exclude singularities, joint-limit boundaries, and unreachable poses unless the test is specifically validating failure behavior.
 
-For Virtual6DofTestArm, phase 1 must support posture classification and posture-constrained solve for lefty/righty, above/below, and flip/non-flip. The same posture behavior must be validated for Kawasaki RS007N and Nachi MZ04D after their real preset data is provided. Exhaustive branch enumeration is best-effort for numerical IK and becomes guaranteed only when analytic solver support is added.
+For Virtual6DofTestArm, phase 1 must support posture classification and posture-constrained solve for lefty/righty, above/below, and flip/non-flip. The same posture behavior is validated for Nachi MZ04D, with documented caveats around inferred elbow above-side behavior. Kawasaki RS007N posture behavior must be validated after its real preset data is provided. Exhaustive branch enumeration is best-effort for numerical IK and becomes guaranteed only when analytic solver support is added.
 
 ## Boundaries
 
@@ -616,17 +619,17 @@ The first engineering milestone is complete when:
 
 ## Real Preset Validation Success Criteria
 
-After source data is provided, Kawasaki RS007N and Nachi MZ04D preset validation is complete when:
+Real preset validation is complete when:
 
-- Kawasaki RS007N and Nachi MZ04D presets exist as JSON.
-- Built-in C++ fallbacks exist for both real presets.
+- The preset exists as JSON.
+- A built-in C++ fallback exists.
 - Source references are recorded for dimensions, joint limits, and posture definitions where available.
 - FK/IK fixture tests pass for normal non-singular poses.
 - Posture classification and posture-constrained solve are validated for lefty/righty, above/below, and flip/non-flip.
 
 ## Open Questions
 
-- Exact source documents/config files for Kawasaki RS007N and Nachi MZ04D dimensions, joint limits, and posture definitions still need to be collected and referenced.
+- Exact source documents/config files for Kawasaki RS007N dimensions, joint limits, and posture definitions still need to be collected and referenced.
 
 ## Validation Follow-Ups
 

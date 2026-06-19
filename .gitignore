@@ -42,3 +42,6 @@ ui_*.h
 *.pro.user
 *.pro.user.*
 .qtcreator/
+
+# --- Local agent/editor config ---
+/.claude/
