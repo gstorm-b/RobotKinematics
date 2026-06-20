@@ -11,6 +11,7 @@ int runRobotModelValidatorTests(int argc, char** argv);
 int runJointLimitValidatorTests(int argc, char** argv);
 int runFrameToolTests(int argc, char** argv);
 int runForwardKinematicsTests(int argc, char** argv);
+int runRobot3DVisualizerLogicTests(int argc, char** argv);
 int runFrameToolFkTests(int argc, char** argv);
 int runIKApiTests(int argc, char** argv);
 int runIKSolutionRankerTests(int argc, char** argv);
@@ -49,6 +50,7 @@ int main(int argc, char** argv)
     status |= runSuite("JointLimitValidatorTests", runJointLimitValidatorTests, argc, argv);
     status |= runSuite("FrameToolTests", runFrameToolTests, argc, argv);
     status |= runSuite("ForwardKinematicsTests", runForwardKinematicsTests, argc, argv);
+    status |= runSuite("Robot3DVisualizerLogicTests", runRobot3DVisualizerLogicTests, argc, argv);
     status |= runSuite("FrameToolFkTests", runFrameToolFkTests, argc, argv);
     status |= runSuite("IKApiTests", runIKApiTests, argc, argv);
     status |= runSuite("IKSolutionRankerTests", runIKSolutionRankerTests, argc, argv);

@@ -61,7 +61,7 @@ Maybe the orent or length when make the parameters table was misunderstand, be m
 
 Joint limits (from robot teach pendant):
 J1 (-170.0, 170.0)
-J2 (-90.0, 145.0)
+J2 (-145.0, 90.0)
 J3 (-125.0, 280.0)
 J4 (-190.0, 190.0)
 J5 (-120.0, 120.0)
@@ -119,6 +119,10 @@ in `tests/integration/NachiMZ04DTests.cpp`.
 The Arm-config ground-truth set also doubles as a **tool-offset FK check**: with tool offset
 `(44.2, 0, 139.0) mm` the 4 TCP poses are reproduced to <= 0.04 mm / 0.005 deg
 (`forwardKinematicsWithToolMatchesMeasuredPoses`).
+
+Important example note: `examples/Robot3DVizualize/Centering_tool.stl` uses a different
+example-local visual/tool offset of `(45, 0, 112, 0, 0, 0)`. Do not replace this measured FK
+fixture value with the STL/example value unless the underlying preset test data is re-measured.
 
 ## Arm config
 

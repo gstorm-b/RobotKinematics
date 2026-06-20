@@ -30,6 +30,7 @@ SOURCES += \
     unit/JointLimitValidatorTests.cpp \
     unit/FrameToolTests.cpp \
     unit/ForwardKinematicsTests.cpp \
+    unit/Robot3DVisualizerLogicTests.cpp \
     unit/IKApiTests.cpp \
     unit/IKSolutionRankerTests.cpp \
     unit/NumericalIKSolverTests.cpp \
@@ -52,6 +53,7 @@ HEADERS += \
     unit/JointLimitValidatorTests.h \
     unit/FrameToolTests.h \
     unit/ForwardKinematicsTests.h \
+    unit/Robot3DVisualizerLogicTests.h \
     unit/IKApiTests.h \
     unit/IKSolutionRankerTests.h \
     unit/NumericalIKSolverTests.h \
