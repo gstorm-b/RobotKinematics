@@ -18,9 +18,9 @@ namespace {
 std::string virtualCollisionProfilePath()
 {
     const char* candidates[] = {
-        "../collision_profiles/virtual_6dof_test_arm_collision.json",
-        "collision_profiles/virtual_6dof_test_arm_collision.json",
-        "../../collision_profiles/virtual_6dof_test_arm_collision.json",
+        "../presets/virtual_6dof_test_arm_collision.json",
+        "presets/virtual_6dof_test_arm_collision.json",
+        "../../presets/virtual_6dof_test_arm_collision.json",
     };
     for (const char* candidate : candidates) {
         if (QFile(QString::fromUtf8(candidate)).exists()) {
@@ -33,9 +33,9 @@ std::string virtualCollisionProfilePath()
 std::string nachiCollisionProfilePath()
 {
     const char* candidates[] = {
-        "../collision_profiles/nachi_mz04d_collision.json",
-        "collision_profiles/nachi_mz04d_collision.json",
-        "../../collision_profiles/nachi_mz04d_collision.json",
+        "../presets/Nachi/MZ04/nachi_mz04d_collision.json",
+        "presets/Nachi/MZ04/nachi_mz04d_collision.json",
+        "../../presets/Nachi/MZ04/nachi_mz04d_collision.json",
     };
     for (const char* candidate : candidates) {
         if (QFile(QString::fromUtf8(candidate)).exists()) {

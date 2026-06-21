@@ -75,7 +75,7 @@ CollisionProfile virtual6DofTestArm()
         SourceReference{
             "project_fixture",
             "Virtual 6DOF collision approximation",
-            "docs/collision_detection_plan.md",
+            "docs/planning/collision_detection_plan.md",
             {"collision_geometry"},
         },
     };
@@ -115,7 +115,7 @@ CollisionProfile nachiMZ04D()
         SourceReference{
             "project_estimate",
             "Conservative primitive approximation from Nachi visual CAD assets",
-            "examples/Robot3DVizualize/3d_model",
+            "presets/Nachi/MZ04",
             {"collision_geometry"},
         },
     };

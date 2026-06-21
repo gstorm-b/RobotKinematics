@@ -22,7 +22,7 @@ Phase 6 is complete. The example:
 - links against the core `RobotKinematics` static library through `Robot3DVizualize.pro`;
 - uses the local VTK path `D:\Project\vtk_build\vtk\install-x64-cuda-qt-vs` as the MSVC build-script default when `VTK_ROOT` is unset;
 - starts a `QVTKOpenGLNativeWidget` scene;
-- loads all eight STL runtime assets from `3d_model/`;
+- loads all eight STL runtime assets from `presets/Nachi/MZ04/`;
 - renders orientation axes, a simple ground plane, distinct part colors, and basic lighting;
 - updates STL actors from live FK using home-relative visual transforms;
 - applies a documented static correction to `Centering_tool.stl` before the flange FK delta;

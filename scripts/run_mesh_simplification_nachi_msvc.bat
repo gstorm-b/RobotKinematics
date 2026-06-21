@@ -3,7 +3,7 @@ REM ============================================================================
 REM Run the mesh simplification tool on the Nachi MZ04D mesh profile and emit
 REM simplified STL meshes plus a paired simplified-profile JSON next to them.
 REM
-REM The simplified meshes land under collision_profiles/simplified/nachi_mz04d/
+REM The simplified meshes land under presets/Nachi/MZ04/simplified/nachi_mz04d/
 REM and the simplified profile is written next to the original Nachi profile
 REM so MeshCollisionProfileJsonLoader resolves the relative paths consistently.
 REM ============================================================================
@@ -12,7 +12,7 @@ setlocal
 if "%QT_MSVC_DIR%"=="" set "QT_MSVC_DIR=C:\Qt\6.8.2\msvc2022_64"
 
 set "ROOT=%~dp0.."
-set "TOOL_DIR=%ROOT%\_build_tools_msvc\mesh_simplification"
+set "TOOL_DIR=%ROOT%\build\tools\mesh_simplification"
 set "EXE=%TOOL_DIR%\release\mesh_simplification.exe"
 if not exist "%EXE%" set "EXE=%TOOL_DIR%\mesh_simplification.exe"
 
@@ -23,9 +23,9 @@ if not exist "%EXE%" (
 
 set "PATH=%QT_MSVC_DIR%\bin;%PATH%"
 
-set "INPUT=%ROOT%\collision_profiles\nachi_mz04d_mesh_collision.json"
-set "OUTPUT=%ROOT%\collision_profiles\nachi_mz04d_mesh_collision_simplified.json"
-set "MESH_OUTPUT_DIR=%ROOT%\collision_profiles\simplified\nachi_mz04d"
+set "INPUT=%ROOT%\presets\Nachi\MZ04\nachi_mz04d_mesh_collision.json"
+set "OUTPUT=%ROOT%\presets\Nachi\MZ04\nachi_mz04d_mesh_collision_simplified.json"
+set "MESH_OUTPUT_DIR=%ROOT%\presets\Nachi\MZ04\simplified\nachi_mz04d"
 set "VOXEL_COUNT=20"
 set "SAFETY_FACTOR=0.4"
 

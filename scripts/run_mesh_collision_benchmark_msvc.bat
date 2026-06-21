@@ -7,7 +7,7 @@ set "ROOT=%~dp0.."
 if "%COAL_ROOT%"=="" set "COAL_ROOT=%ROOT%\third_party\install\coal"
 if "%ASSIMP_ROOT%"=="" set "ASSIMP_ROOT=%ROOT%\third_party\install\assimp"
 if "%BOOST_ROOT%"=="" set "BOOST_ROOT=%ROOT%\third_party\install\boost"
-set "EXE=%ROOT%\_build_tools_msvc\mesh_collision_benchmark\release\mesh_collision_benchmark.exe"
+set "EXE=%ROOT%\build\tools\mesh_collision_benchmark\release\mesh_collision_benchmark.exe"
 
 if not exist "%EXE%" (
     echo [ERROR] %EXE% not found. Run scripts\build_mesh_collision_benchmark_msvc.bat first.

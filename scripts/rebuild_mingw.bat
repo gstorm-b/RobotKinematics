@@ -7,7 +7,7 @@ REM development, prefer build_mingw.bat followed by test_mingw.bat.
 REM ============================================================================
 setlocal
 set "ROOT=%~dp0.."
-set "BUILD=%ROOT%\_build_mingw"
+set "BUILD=%ROOT%\build\mingw"
 
 if exist "%ROOT%\.qmake.stash" del /q "%ROOT%\.qmake.stash" >nul 2>&1
 if exist "%BUILD%" rmdir /s /q "%BUILD%" || exit /b 1

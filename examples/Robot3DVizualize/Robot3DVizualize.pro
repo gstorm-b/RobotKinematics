@@ -14,9 +14,9 @@ INCLUDEPATH += \
 # ROBOTKINEMATICS_LIB_DIR selects which RobotKinematics build to link against. The
 # default targets the no-mesh-backend MSVC build. To exercise the mesh backend
 # selector in this example, build the Coal-enabled library and pass
-#   qmake ... "ROBOTKINEMATICS_LIB_DIR=<repo>/_build_msvc_mesh_coal/lib"
+#   qmake ... "ROBOTKINEMATICS_LIB_DIR=<repo>/build/msvc_mesh_coal/lib"
 isEmpty(ROBOTKINEMATICS_LIB_DIR): ROBOTKINEMATICS_LIB_DIR = $$(ROBOTKINEMATICS_LIB_DIR)
-isEmpty(ROBOTKINEMATICS_LIB_DIR): ROBOTKINEMATICS_LIB_DIR = $$PWD/../../_build_msvc/lib
+isEmpty(ROBOTKINEMATICS_LIB_DIR): ROBOTKINEMATICS_LIB_DIR = $$PWD/../../build/msvc/lib
 
 LIBS += -L$$ROBOTKINEMATICS_LIB_DIR -lRobotKinematics
 PRE_TARGETDEPS += $$ROBOTKINEMATICS_LIB_DIR/RobotKinematics.lib

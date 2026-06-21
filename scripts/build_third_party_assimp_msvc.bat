@@ -6,7 +6,7 @@ if "%VCVARS%"=="" set "VCVARS=C:\Program Files\Microsoft Visual Studio\2022\Comm
 
 set "ROOT=%~dp0.."
 set "SRC=%ROOT%\third_party\assimp"
-set "BUILD=%ROOT%\_build_third_party\assimp"
+set "BUILD=%ROOT%\third_party\build\assimp"
 set "INSTALL=%ROOT%\third_party\install\assimp"
 
 if not exist "%SRC%\CMakeLists.txt" (

@@ -223,8 +223,8 @@ Primitive collision profiles use a separate artifact with schema id
 ```json
 {
   "metadata": {
-    "collisionProfile": "collision_profiles/nachi_mz04d_collision.json",
-    "meshCollisionProfile": "collision_profiles/nachi_mz04d_mesh_collision.json"
+    "collisionProfile": "presets/Nachi/MZ04/nachi_mz04d_collision.json",
+    "meshCollisionProfile": "presets/Nachi/MZ04/nachi_mz04d_mesh_collision.json"
   }
 }
 ```
@@ -317,7 +317,7 @@ Minimum shape:
     {
       "id": "j2_mesh",
       "link": "link_2",
-      "path": "examples/Robot3DVizualize/3d_model/MZ04-01_j2.stl",
+      "path": "MZ04-01_j2.stl",
       "format": "stl",
       "sourceUnits": "mm",
       "scaleToMeters": 0.001,

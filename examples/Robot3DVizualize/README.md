@@ -70,14 +70,14 @@ After building, make sure Qt and VTK runtime DLL directories are on `PATH` befor
 
 ```bat
 set PATH=C:\Qt\6.8.2\msvc2022_64\bin;D:\Project\vtk_build\vtk\install-x64-cuda-qt-vs\bin;%PATH%
-_build_examples_msvc\Robot3DVizualize\release\Robot3DVizualize.exe
+examples\Robot3DVizualize\build\msvc\release\Robot3DVizualize.exe
 ```
 
 If the executable starts but the scene is blank or the process exits early, verify:
 
 - Qt and VTK were built for the same MSVC toolchain.
 - `vtkGUISupportQt-<version>.dll` and the Qt OpenGL/Widgets DLLs are on `PATH`.
-- the executable can still locate `examples/Robot3DVizualize/3d_model` from either the build output tree or the repository tree.
+- the executable can still locate `presets/Nachi/MZ04` from either the build output tree or the repository tree.
 
 ## Qt Creator Project Rules
 
@@ -91,7 +91,7 @@ Open and build the example from `Robot3DVizualize.pro`. This `.pro` file is the 
 
 ## Visual Assets
 
-Runtime mesh assets live in `3d_model/`:
+Runtime mesh assets live in `presets/Nachi/MZ04/`:
 
 - `MZ04-01_base.stl`
 - `MZ04-01_j1.stl`

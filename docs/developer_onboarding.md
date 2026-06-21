@@ -4,17 +4,18 @@
 
 RobotKinematics is a reusable C++ backend library for industrial robot kinematics.
 
-It will let developer engineers:
+It lets developer engineers:
 
 - define or load a robot model;
 - compute forward kinematics;
 - solve inverse kinematics;
-- validate joint limits, primitive self-collision profiles, and planned accurate mesh collision profiles;
+- validate joint limits, primitive self-collision profiles, and optional accurate mesh collision profiles;
 - configure base/user/tool frames;
 - load custom robot presets;
 - choose IK solutions using seed, previous joint state, posture, and options.
 
-The first milestone is not a real robot integration. It is a base implementation verified with a project-owned virtual serial 6DOF robot named `Virtual6DofTestArm`.
+The base milestone is implemented and verified with a project-owned virtual serial 6DOF robot named
+`Virtual6DofTestArm`; the current repo also includes the Nachi MZ04D preset and collision examples.
 
 ## What To Read First
 
@@ -22,7 +23,7 @@ Read in this order:
 
 1. `README.md` for the quick project summary.
 2. `docs/robot_kinematics_spec.md` for the contract.
-3. `docs/robot_kinematics_implementation_plan.md` for task order.
+3. `docs/planning/robot_kinematics_implementation_plan.md` for task order.
 4. `docs/robot_preset_json_schema.md` for preset format.
 5. `AGENTS.md` if you are using AI agents to implement tasks.
 
@@ -57,9 +58,11 @@ Current implementation status:
 - Phase 7 exists for standard DH import to canonical config and URDF-like export/import. Modified DH remains a later adapter extension.
 - Phase 8 analytic IK capability detection and spherical-wrist analytic IK are implemented for supported morphologies.
 - Phase 9 primitive self-collision detection is implemented as a fast approximate/debug path.
-- Phase 10 mesh collision is partially implemented: backend-neutral public types, mesh-profile
-  load/validation, STL normalization, a VTK debug spike, and an optional Coal adapter now exist.
-  The default build still does not compile a mesh backend unless explicit qmake flags are enabled.
+- Phase 10 mesh collision is implemented as an optional backend path: backend-neutral public types,
+  mesh-profile load/validation, STL normalization, optional Coal adapter, Nachi original STL mesh
+  profile, offline mesh simplification tooling, benchmark scripts, and visualizer backend selector
+  now exist. The default build still does not compile a mesh backend unless explicit qmake flags are
+  enabled.
 
 ## Key Architecture Decisions
 
@@ -135,10 +138,10 @@ mesh collision is available only when the optional Coal adapter is compiled; oth
 still return a structured unsupported result. Coal/FCL/VTK/Open3D/CGAL/libigl types must not leak
 into public headers. Mesh assets must declare source units, `scaleToMeters`, and explicit
 `meshToLink` transforms. Relative mesh paths loaded from mesh-profile files resolve against the
-profile JSON directory. Optional backend dependency checkouts/install roots under `third_party` are
-local development artifacts and should not be committed, except for the tracked Eigen dependency.
+profile JSON directory. Optional backend dependency sources, build trees, and install roots live
+under `third_party/` so the Windows 11 + MSVC environment can be reproduced from source.
 
-## Planned Source Layout
+## Source Layout
 
 ```text
 include/
@@ -168,6 +171,11 @@ tests/
   unit/
   integration/
   fixtures/
+
+examples/
+  NachiMZ04Cli/
+  CustomPresetCli/
+  Robot3DVizualize/
 ```
 
 ## Build And Test
@@ -201,9 +209,25 @@ scripts\build_mesh_collision_benchmark_msvc.bat
 scripts\run_mesh_collision_benchmark_msvc.bat
 ```
 
+Build output convention:
+
+- core/library/test builds live under repository-root `build/` (`build/msvc`, `build/mingw`,
+  `build/msvc_mesh_coal`, and `build/tools`);
+- example builds live under the example folder, e.g. `examples/Robot3DVizualize/build/msvc`;
+- optional third-party dependency sources, build trees, and install outputs live under
+  `third_party/` (`third_party/<name>`, `third_party/build/<name>`, and
+  `third_party/install/<name>`);
+- Nachi MZ04D preset, STL assets, primitive profile, and mesh profile live together under
+  `presets/Nachi/MZ04`.
+
+Third-party dependency builds are currently documented and supported for Windows 11 with MSVC
+through the `scripts/build_third_party_*_msvc.bat` scripts. Run them from a Windows 11 machine with
+Visual Studio 2022 Build Tools/MSVC available through `VCVARS` and Qt's CMake available through
+`QT_CMAKE` when a script requires CMake.
+
 ## How To Pick Up Work
 
-Use `docs/robot_kinematics_implementation_plan.md`.
+Use `docs/planning/robot_kinematics_implementation_plan.md`.
 
 Pick the first incomplete task whose dependencies are complete. Keep the change small enough to review in one focused session.
 
@@ -221,8 +245,8 @@ Good initial task order:
 10. Implement numerical IK.
 11. Implement posture/ranking.
 12. Implement JSON loader and `Virtual6DofTestArm`.
-13. Implement primitive collision detection using `docs/collision_detection_plan.md`.
-14. Implement mesh collision backend using `docs/mesh_collision_backend_plan.md`.
+13. Implement primitive collision detection using `docs/planning/collision_detection_plan.md`.
+14. Implement mesh collision backend using `docs/planning/mesh_collision_backend_plan.md`.
 
 ## Definition Of Done
 
@@ -235,7 +259,7 @@ A task is done when:
 - spec/plan/schema docs are updated if behavior changed;
 - no unrelated scope was added.
 
-The base milestone is done when `Virtual6DofTestArm` passes FK/IK/frame/tool/joint-limit/posture tests and the library builds with MSVC.
+The base milestone is done when `Virtual6DofTestArm` passes FK/IK/frame/tool/joint-limit/posture tests and the library builds with MSVC. This repository has passed that milestone and now carries Phase 9/10 collision extensions plus example applications.
 
 Current IK limitation: request reference frames are supported when empty/base or when a user frame is fixed to the base link. User frames attached to moving links return `InvalidRequest` for IK because their base-relative transform depends on the unknown joint vector.
 

@@ -59,7 +59,7 @@ void CollisionApiTests::profileCanStoreSphereAndCapsuleGeometry()
     profile.sources.push_back(SourceReference{
         "project_fixture",
         "Virtual test-arm conservative collision profile",
-        "docs/collision_detection_plan.md",
+        "docs/planning/collision_detection_plan.md",
         {"collision_geometry"},
     });
     profile.metadata["reviewState"] = "draft";

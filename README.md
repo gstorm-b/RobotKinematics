@@ -1,14 +1,14 @@
 # RobotKinematics
 
-RobotKinematics is a planned C++/Eigen backend library for industrial robot kinematics.
+RobotKinematics is a C++/Eigen backend library for industrial robot kinematics.
 
-The library will support forward kinematics, inverse kinematics, joint-limit validation, user frames, tool frames, custom robot presets, reusable solver interfaces, primitive self-collision checks, and an accurate mesh collision backend. It has no UI.
+The library supports forward kinematics, inverse kinematics, joint-limit validation, user frames, tool frames, custom robot presets, reusable solver interfaces, primitive self-collision checks, and an optional accurate mesh collision backend. It has no core UI.
 
 ## Current Status
 
 The base serial 6DOF library milestone is implemented. The codebase includes the Qt/qmake static library, Qt Test runner, core units and `Pose`, canonical serial robot model, model validation, joint-limit validation, frame/tool registries, FK, numerical IK, posture-aware solution selection, JSON preset loading, `Virtual6DofTestArm`, standard DH import, URDF-like import/export, and a hybrid analytic IK plugin for supported spherical-wrist 6R robots.
 
-Primitive self-collision detection is implemented as a fast approximate/debug path. Phase 10 backend-neutral mesh scaffolding is now in place: mesh profile types/loaders, STL mesh normalization, a default no-backend `UnsupportedSolver` path, and an optional Coal adapter behind qmake flags are implemented. Synthetic Coal backend tests pass; the next mesh-collision task is authoring the real Nachi MZ04D STL mesh profile. See [docs/mesh_collision_backend_plan.md](docs/mesh_collision_backend_plan.md) and [docs/mesh_collision_backend_spike.md](docs/mesh_collision_backend_spike.md).
+Primitive self-collision detection is implemented as a fast approximate/debug path. Phase 10 mesh collision is also implemented behind optional qmake flags: backend-neutral mesh profile types/loaders, STL mesh normalization, a default no-backend `UnsupportedSolver` path, an optional Coal adapter, the Nachi MZ04D original STL mesh profile, offline voxel-grid simplification tooling, and a Qt/VTK visualizer mode selector are in place. See [docs/planning/mesh_collision_backend_plan.md](docs/planning/mesh_collision_backend_plan.md) and [docs/planning/mesh_collision_backend_spike.md](docs/planning/mesh_collision_backend_spike.md).
 
 Real preset status:
 
@@ -20,16 +20,28 @@ Real preset status:
 Read these files in order:
 
 1. [Project Spec](docs/robot_kinematics_spec.md)
-2. [Implementation Plan](docs/robot_kinematics_implementation_plan.md)
-3. [Preset JSON Schema](docs/robot_preset_json_schema.md)
-4. [Collision Detection Plan](docs/collision_detection_plan.md), if you are working on primitive collision
-5. [Mesh Collision Backend Plan](docs/mesh_collision_backend_plan.md), if you are working on accurate mesh collision
-6. [Developer Onboarding](docs/developer_onboarding.md)
-7. [Agent Instructions](AGENTS.md), if you are an AI/code agent working on this repo
+2. [Planning Index](docs/planning/README.md)
+3. [Implementation Plan](docs/planning/robot_kinematics_implementation_plan.md)
+4. [Preset JSON Schema](docs/robot_preset_json_schema.md)
+5. [Collision Detection Plan](docs/planning/collision_detection_plan.md), if you are working on primitive collision
+6. [Mesh Collision Backend Plan](docs/planning/mesh_collision_backend_plan.md), if you are working on accurate mesh collision
+7. [Developer Onboarding](docs/developer_onboarding.md)
+8. [Agent Instructions](AGENTS.md), if you are an AI/code agent working on this repo
 
 If you want to **use RobotKinematics as a library** (rather than work on it), see the
 [Developer Guide](docs/developer-guide/README.md) — building/linking, usage examples, an API
 reference, conventions/gotchas, and architecture decision records.
+
+## Examples
+
+No-UI examples:
+
+- [examples/NachiMZ04Cli](examples/NachiMZ04Cli/README.md): load the built-in Nachi MZ04D preset, run FK, IK, and primitive collision.
+- [examples/CustomPresetCli](examples/CustomPresetCli/README.md): create a new canonical preset with `SerialRobotConfigBuilder`, then run FK and IK.
+
+Visualizer example:
+
+- [examples/Robot3DVizualize](examples/Robot3DVizualize/README.md): Qt 6 + VTK interactive Nachi MZ04D viewer with primitive and optional mesh collision modes. VTK remains example-only.
 
 ## Core Decisions
 
@@ -45,7 +57,7 @@ reference, conventions/gotchas, and architecture decision records.
 - Preset format: JSON schema `robot-kinematics-preset/v1`.
 - First preset: `Virtual6DofTestArm`.
 - First numerical IK method: adaptive damped least squares.
-- Collision detection direction: primitive fallback/debug plus backend-neutral accurate mesh scaffolding, with Coal available as an optional compiled backend.
+- Collision detection direction: primitive fallback/debug plus backend-neutral accurate mesh mode, with Coal available as an optional compiled backend.
 
 ## First Milestone
 
@@ -74,6 +86,11 @@ scripts\build_msvc.bat
 scripts\test_msvc.bat
 ```
 
+Build scripts write core/library outputs under `build/` at the repository root, for example
+`build/msvc`, `build/mingw`, and `build/msvc_mesh_coal`. Example apps keep their build outputs under
+their own folders, for example `examples/NachiMZ04Cli/build/msvc` and
+`examples/Robot3DVizualize/build/msvc`.
+
 For a clean MSVC rebuild plus tests:
 
 ```powershell
@@ -87,11 +104,10 @@ scripts\build_mingw.bat
 scripts\test_mingw.bat
 ```
 
-## Non-Goals For The First Milestone
+## Non-Goals
 
-- No UI.
+- No core UI. UI belongs in examples only.
 - No physical robot accuracy claim.
-- No collision checking in the first milestone. Primitive self-collision is planned as a later extension.
 - No path planning.
 - No SCARA, delta, parallel, 4DOF, or 5DOF implementation.
 - No exhaustive guarantee for numerical `solveAll`.

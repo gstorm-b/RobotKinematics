@@ -103,6 +103,36 @@ return `Result<ArmPosture>`.
 - `PresetJsonLoader::loadFile(path)` / `loadJson(json)` → `Result<SerialRobotConfig>` —
   `Presets/PresetJsonLoader.h`
 
+## Collision (`RobotKinematics/Collision/...`)
+
+### Primitive profiles and checks
+
+- `CollisionProfile` / `CollisionGeometry` — `Collision/CollisionProfile.h`
+- `CollisionProfileJsonLoader::loadFile(path)` / `loadJson(json)` →
+  `Result<CollisionProfile>` — `Collision/CollisionProfileJsonLoader.h`
+- `CollisionCheckRequest{ joints, safetyMargin_m, returnAllPairs }` —
+  `Collision/CollisionChecker.h`
+- `CollisionCheckResult{ status, hasCollision, pairs, message }` with `ok()`
+- `CollisionPairResult{ geometryA, geometryB, linkA, linkB, colliding, distance_m, contactCount }`
+
+Use `CollisionBackends::checkPrimitive(config, profile, request)` for the default lightweight
+sphere/capsule path.
+
+### Mesh profiles and optional backend
+
+- `MeshCollisionProfile` / `MeshCollisionGeometry` —
+  `Collision/MeshCollisionProfile.h`
+- `MeshCollisionProfileJsonLoader::loadFile(path)` / `loadJson(json)` →
+  `Result<MeshCollisionProfile>` — `Collision/MeshCollisionProfileJsonLoader.h`
+- `MeshCollisionCheckRequest{ joints, safetyMargin_m, returnAllPairs, preferredBackend }` —
+  `Collision/CollisionBackend.h`
+- `CollisionBackends::meshInfo()` / `availableBackends()` report backend availability.
+- `CollisionBackends::checkMesh(config, profile, request)` runs the optional mesh backend and
+  returns `UnsupportedSolver` when no mesh backend is compiled.
+
+Mesh backend types are intentionally RobotKinematics-owned. Coal/FCL/VTK/Open3D/CGAL/libigl types
+must not appear in public headers.
+
 ## Adapters (`RobotKinematics/Adapters/...`)
 
 - `DhAdapter::fromStandardDh(identity, rows)` with `StandardDhParameter{ jointId, a_m, alpha_rad,

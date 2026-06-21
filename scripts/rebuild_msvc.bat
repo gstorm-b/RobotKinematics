@@ -7,7 +7,7 @@ REM development, prefer build_msvc.bat followed by test_msvc.bat.
 REM ============================================================================
 setlocal
 set "ROOT=%~dp0.."
-set "BUILD=%ROOT%\_build_msvc"
+set "BUILD=%ROOT%\build\msvc"
 
 if exist "%ROOT%\.qmake.stash" del /q "%ROOT%\.qmake.stash" >nul 2>&1
 if exist "%BUILD%" rmdir /s /q "%BUILD%" || exit /b 1

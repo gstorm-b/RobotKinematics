@@ -3,7 +3,7 @@
 This guide is for **developers who want to use RobotKinematics as a library** in their own
 C++ application. (If you are working *on* the library itself, start with
 [../developer_onboarding.md](../developer_onboarding.md) and
-[../robot_kinematics_implementation_plan.md](../robot_kinematics_implementation_plan.md).)
+[../planning/robot_kinematics_implementation_plan.md](../planning/robot_kinematics_implementation_plan.md).)
 
 RobotKinematics is a C++17 / Eigen backend for serial industrial-robot kinematics. It provides:
 
@@ -16,10 +16,10 @@ RobotKinematics is a C++17 / Eigen backend for serial industrial-robot kinematic
 - frame and tool registries;
 - robot presets (built-in C++ and `robot-kinematics-preset/v1` JSON);
 - adapters for standard DH input and URDF import/export;
-- primitive self-collision checks as a fast approximate/debug path.
+- primitive self-collision checks as a fast approximate/debug path;
+- optional Coal-backed STL mesh collision through backend-neutral RobotKinematics APIs.
 
-There is **no UI, no path planning, and no dynamics**. Accurate mesh collision is planned as an
-optional backend extension; until that lands, collision coverage is limited by primitive profiles.
+There is **no core UI, no path planning, and no dynamics**. UI code lives only under examples.
 
 ## Contents
 
@@ -30,6 +30,12 @@ optional backend extension; until that lands, collision coverage is limited by p
 | [api-reference.md](api-reference.md) | Concise reference of the public headers, types, and functions. |
 | [conventions-and-gotchas.md](conventions-and-gotchas.md) | Units, the RPY/Euler convention, `solveAll` semantics, IK frame limitations, and other traps. |
 | [decisions/](decisions/) | Architecture Decision Records (the *why* behind the design). |
+
+Runnable examples:
+
+- [../../examples/NachiMZ04Cli](../../examples/NachiMZ04Cli/README.md): built-in Nachi preset, FK, IK, and primitive collision.
+- [../../examples/CustomPresetCli](../../examples/CustomPresetCli/README.md): programmatic custom preset creation with FK/IK validation.
+- [../../examples/Robot3DVizualize](../../examples/Robot3DVizualize/README.md): Qt/VTK visualizer for Nachi MZ04D, including optional mesh collision modes.
 
 ## Quick start
 
@@ -71,6 +77,7 @@ include/RobotKinematics/   Public headers (this is your include root)
   Model/                   SerialRobotConfig + value types, validator, builder, registries
   Kinematics/              ForwardKinematics, SerialRobotKinematics, IK request/result types
   Solvers/                 Numerical + analytic IK solvers (used via SerialRobotKinematics)
+  Collision/               Primitive and optional mesh collision APIs
   Posture/                 ArmPosture, PostureResolver
   Presets/                 Virtual6DofTestArm, NachiMZ04D, PresetJsonLoader
   Adapters/                DhAdapter, UrdfAdapter

@@ -13,4 +13,4 @@ are written here so consumers and future maintainers don't have to re-derive the
 
 Process: don't delete superseded ADRs — write a new one that references and supersedes the old.
 See the broader rationale in [../../robot_kinematics_spec.md](../../robot_kinematics_spec.md) and
-[../../robot_kinematics_implementation_plan.md](../../robot_kinematics_implementation_plan.md).
+[../../planning/robot_kinematics_implementation_plan.md](../../planning/robot_kinematics_implementation_plan.md).

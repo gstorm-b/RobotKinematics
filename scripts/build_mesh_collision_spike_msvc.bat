@@ -31,7 +31,7 @@ if "%VTK_ROOT%"=="" (
 
 set "ROOT=%~dp0.."
 set "PROJECT=%ROOT%\tools\mesh_collision_spike\mesh_collision_spike.pro"
-set "BUILD=%ROOT%\_build_tools_msvc\mesh_collision_spike"
+set "BUILD=%ROOT%\build\tools\mesh_collision_spike"
 
 call "%VCVARS%"
 if not defined VCToolsInstallDir ( echo [ERROR] vcvars64 did not initialize the MSVC toolchain & exit /b 1 )

@@ -18,7 +18,7 @@ setlocal
 if "%QT_MSVC_DIR%"=="" set "QT_MSVC_DIR=C:\Qt\6.8.2\msvc2022_64"
 if "%VCVARS%"=="" set "VCVARS=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
 set "ROOT=%~dp0.."
-set "BUILD=%ROOT%\_build_msvc"
+set "BUILD=%ROOT%\build\msvc"
 
 call "%VCVARS%"
 if not defined VCToolsInstallDir ( echo [ERROR] vcvars64 did not initialize the MSVC toolchain & exit /b 1 )

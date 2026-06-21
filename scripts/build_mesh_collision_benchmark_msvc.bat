@@ -8,8 +8,8 @@ set "ROOT=%~dp0.."
 if "%COAL_ROOT%"=="" set "COAL_ROOT=%ROOT%\third_party\install\coal"
 if "%ASSIMP_ROOT%"=="" set "ASSIMP_ROOT=%ROOT%\third_party\install\assimp"
 if "%BOOST_ROOT%"=="" set "BOOST_ROOT=%ROOT%\third_party\install\boost"
-set "ROBOTKINEMATICS_LIB_DIR=%ROOT%\_build_msvc_mesh_coal\lib"
-set "BUILD=%ROOT%\_build_tools_msvc\mesh_collision_benchmark"
+set "ROBOTKINEMATICS_LIB_DIR=%ROOT%\build\msvc_mesh_coal\lib"
+set "BUILD=%ROOT%\build\tools\mesh_collision_benchmark"
 
 call "%VCVARS%"
 if not defined VCToolsInstallDir ( echo [ERROR] vcvars64 did not initialize the MSVC toolchain & exit /b 1 )

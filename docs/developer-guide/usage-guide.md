@@ -12,6 +12,7 @@ otherwise (see [conventions-and-gotchas.md](conventions-and-gotchas.md)).
 - [6. Posture classification](#6-posture-classification)
 - [7. Validate a model](#7-validate-a-model)
 - [8. Adapters: DH and URDF](#8-adapters-dh-and-urdf)
+- [9. Collision checks](#9-collision-checks)
 
 ---
 
@@ -39,7 +40,7 @@ kinematics/limits/posture were derived from teach-pendant data (see
 #include <RobotKinematics/Presets/PresetJsonLoader.h>
 
 const Result<SerialRobotConfig> loaded =
-    PresetJsonLoader::loadFile("presets/nachi_mz04d.json");
+    PresetJsonLoader::loadFile("presets/Nachi/MZ04/nachi_mz04d.json");
 if (!loaded.ok()) {
     // loaded.status is a KinematicsStatus; loaded.message explains the problem.
     return;
@@ -307,3 +308,60 @@ const Result<SerialRobotConfig> imported =
 URDF cannot carry all canonical metadata (posture, solver hints, source references); those must
 be supplied separately. Import expects a serial chain and returns a clear error for unsupported
 structures.
+
+---
+
+## 9. Collision checks
+
+Primitive collision is available in the default build. Mesh collision uses the same
+backend-neutral API, but requires a mesh-backend-enabled build such as the Coal flow documented in
+[building-and-linking.md](building-and-linking.md).
+
+```cpp
+#include <RobotKinematics/Collision/CollisionBackend.h>
+#include <RobotKinematics/Collision/CollisionProfileJsonLoader.h>
+
+const Result<CollisionProfile> profile =
+    CollisionProfileJsonLoader::loadFile("presets/Nachi/MZ04/nachi_mz04d_collision.json");
+if (!profile.ok()) {
+    return;
+}
+
+CollisionCheckRequest request;
+request.joints = q;
+request.safetyMargin_m = 0.0;
+request.returnAllPairs = true;
+
+const CollisionCheckResult result =
+    CollisionBackends::checkPrimitive(config, profile.value, request);
+if (result.ok() && result.hasCollision) {
+    for (const CollisionPairResult& pair : result.pairs) {
+        if (pair.colliding) {
+            // pair.linkA, pair.linkB, pair.distance_m, pair.contactCount
+        }
+    }
+}
+```
+
+Mesh collision profiles are loaded separately:
+
+```cpp
+#include <RobotKinematics/Collision/MeshCollisionProfileJsonLoader.h>
+
+const CollisionBackendInfo mesh = CollisionBackends::meshInfo();
+if (mesh.available) {
+    const Result<MeshCollisionProfile> meshProfile =
+        MeshCollisionProfileJsonLoader::loadFile("presets/Nachi/MZ04/nachi_mz04d_mesh_collision.json");
+
+    MeshCollisionCheckRequest meshRequest;
+    meshRequest.joints = q;
+    meshRequest.returnAllPairs = true;
+
+    const CollisionCheckResult meshResult =
+        CollisionBackends::checkMesh(config, meshProfile.value, meshRequest);
+}
+```
+
+Collision profiles are not safety certification data. Primitive profiles are approximate/debug
+geometry. Mesh profiles cover STL assets more accurately but still depend on authored
+`meshToLink` transforms, source units, backend availability, and real fixture validation.

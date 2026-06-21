@@ -11,7 +11,7 @@
 
 ## 2026-06-19 Nachi MZ04D Kinematics (Task 6.2, partial)
 
-- Implemented Nachi MZ04D preset (`src/Presets/NachiMZ04D.cpp`, `presets/nachi_mz04d.json`, header, test `tests/integration/NachiMZ04DTests.cpp`). All suites pass under MSVC.
+- Implemented Nachi MZ04D preset (`src/Presets/NachiMZ04D.cpp`, `presets/Nachi/MZ04/nachi_mz04d.json`, header, test `tests/integration/NachiMZ04DTests.cpp`). All suites pass under MSVC.
 - Kinematics were reverse-engineered from the teach-pendant measurements in `docs/preset_references/nachi-mz04d.md` (the user's guessed DH was wrong beyond signs). Corrected standard DH and the full derivation are documented at the bottom of that md file. Reproduces all 21 poses to <= 0.035 mm / 0.010 deg.
 - CRITICAL convention: the Nachi pendant reports orientation **Z-first** = `(yaw_Z, pitch_Y, roll_X)`. `Pose::fromXYZRPY_*` takes `(roll, pitch, yaw)`, so map the 1st reported number to yaw and the 3rd to roll. This mismatch was the main blocker (position fit while orientation did not).
 - Joint limits are applied from the pendant ranges in the md. Posture is mapped from the Nachi manual rules the user added: shoulder=sign(J1) (J1<0 righty, J1>0 lefty), wrist=sign(J5) (J5<0 flip, J5>0 non-flip), elbow=sign(J3) (J3<0 above, J3>0 below). The generic `serial_6dof_shoulder_elbow_wrist` resolver already classifies by sign(J1)/sign(J3)/sign(J5); only the preset `posture.labels` (negative/positive -> name) needed setting. The user's 4-config Arm-config ground-truth set (all below/non-flip, 2 lefty + 2 righty) confirms shoulder/wrist + elbow below-side; elbow above-side inferred. Verified in `NachiMZ04DTests::postureClassificationMatchesNachiManualRules`.

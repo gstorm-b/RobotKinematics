@@ -52,7 +52,7 @@ QString findRepoRoot()
 {
     for (const QString& root : candidateRoots()) {
         const QDir directory(root);
-        if (directory.exists(QStringLiteral("collision_profiles/nachi_mz04d_mesh_collision.json"))) {
+        if (directory.exists(QStringLiteral("presets/Nachi/MZ04/nachi_mz04d_mesh_collision.json"))) {
             return directory.absolutePath();
         }
     }
@@ -65,7 +65,7 @@ QString nachiMeshProfilePath()
     if (root.isEmpty()) {
         return QString();
     }
-    return QDir(root).absoluteFilePath(QStringLiteral("collision_profiles/nachi_mz04d_mesh_collision.json"));
+    return QDir(root).absoluteFilePath(QStringLiteral("presets/Nachi/MZ04/nachi_mz04d_mesh_collision.json"));
 }
 
 struct ExpectedMeshAtHome {
@@ -116,7 +116,7 @@ JointVector aggressiveFoldedJointDegrees()
 void NachiMeshCollisionTests::profileLoadsAndValidatesAgainstNachiPreset()
 {
     const QString path = nachiMeshProfilePath();
-    QVERIFY2(!path.isEmpty(), "could not locate collision_profiles/nachi_mz04d_mesh_collision.json relative to test working directory");
+    QVERIFY2(!path.isEmpty(), "could not locate presets/Nachi/MZ04/nachi_mz04d_mesh_collision.json relative to test working directory");
 
     const Result<MeshCollisionProfile> loaded =
         MeshCollisionProfileJsonLoader::loadFile(path.toStdString());

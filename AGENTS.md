@@ -8,10 +8,10 @@ Before editing code or docs, read these files:
 
 1. `README.md`
 2. `docs/robot_kinematics_spec.md`
-3. `docs/robot_kinematics_implementation_plan.md`
+3. `docs/planning/robot_kinematics_implementation_plan.md`
 4. `docs/robot_preset_json_schema.md`
-5. `docs/collision_detection_plan.md` when working on collision detection
-6. `docs/mesh_collision_backend_plan.md` when working on mesh collision
+5. `docs/planning/collision_detection_plan.md` when working on collision detection
+6. `docs/planning/mesh_collision_backend_plan.md` when working on mesh collision
 7. `docs/developer_onboarding.md`
 
 Do not infer missing project decisions from general robotics conventions when the spec already defines a decision.
@@ -20,15 +20,15 @@ Do not infer missing project decisions from general robotics conventions when th
 
 The base serial 6DOF implementation is largely complete. The repository has a Qt/qmake static library, Qt Test runner, units, `Pose`, canonical serial model, validation, joint limits, frame/tool registries, FK, numerical IK, posture-aware ranking, JSON preset loading, `Virtual6DofTestArm`, Nachi MZ04D, DH/URDF adapters, and a hybrid analytic IK plugin for supported spherical-wrist 6R robots.
 
-Primitive self-collision detection is implemented as a fast approximate/debug path. Phase 10 mesh-collision scaffolding now includes backend-neutral public types, mesh-profile load/validation, STL normalization (with degenerate-triangle filtering on the production path), a default unsupported mesh-backend path, and an optional Coal adapter behind qmake flags. The Nachi MZ04D mesh profile is committed at `collision_profiles/nachi_mz04d_mesh_collision.json`. An offline voxel-grid mesh-simplification tool lives at `tools/mesh_simplification/`; generated simplified profiles and STLs under `collision_profiles/simplified/` and `collision_profiles/*_simplified*.json` are gitignored. The Robot3DVizualize example exposes a Collision Backend selector (Primitive / Mesh - Original / Mesh - Simplified) and can be built against the Coal-enabled library via `scripts/build_example_robot3dvisualize_mesh_coal_msvc.bat`. RobotKinematics owns the public API, and third-party mesh collision libraries stay behind internal adapters per `docs/mesh_collision_backend_plan.md`.
+Primitive self-collision detection is implemented as a fast approximate/debug path. Phase 10 mesh collision includes backend-neutral public types, mesh-profile load/validation, STL normalization (with degenerate-triangle filtering on the production path), a default unsupported mesh-backend path, an optional Coal adapter behind qmake flags, the Nachi MZ04D original mesh profile, and offline mesh simplification tooling. The Nachi MZ04D preset folder `presets/Nachi/MZ04` owns the JSON preset, STL assets, primitive collision profile, and mesh collision profile. An offline voxel-grid mesh-simplification tool lives at `tools/mesh_simplification/`; generated simplified profiles and STLs under `presets/Nachi/MZ04/simplified/` and `presets/Nachi/MZ04/*_simplified*.json` are gitignored. Core/library builds live under root `build/`; example builds live under each example folder's `build/`. The Robot3DVizualize example exposes a Collision Backend selector (Primitive / Mesh - Original / Mesh - Simplified) and can be built against the Coal-enabled library via `scripts/build_example_robot3dvisualize_mesh_coal_msvc.bat`. RobotKinematics owns the public API, and third-party mesh collision libraries stay behind internal adapters per `docs/planning/mesh_collision_backend_plan.md`.
 
-For mesh profiles, relative STL paths loaded with `MeshCollisionProfileJsonLoader::loadFile(path)` resolve against the mesh-profile JSON directory. `loadJson(json)` preserves authored paths. Mesh numeric fields must be JSON numbers, not strings. Do not stage local optional dependency checkouts or install roots from `third_party/assimp`, `third_party/boost`, `third_party/coal`, `third_party/fcl`, `third_party/libccd`, or `third_party/install`; keep `third_party/eigen` as the tracked vendored dependency.
+For mesh profiles, relative STL paths loaded with `MeshCollisionProfileJsonLoader::loadFile(path)` resolve against the mesh-profile JSON directory. `loadJson(json)` preserves authored paths. Mesh numeric fields must be JSON numbers, not strings. Optional mesh-backend dependency sources, build trees, and install outputs are intentionally kept under `third_party/` for Windows 11 + MSVC reproducibility.
 
 Task 6.1, Kawasaki RS007N, remains blocked until the user provides verified dimensions, joint limits, posture rules, and source references. Do not invent Kawasaki data.
 
 ## Implementation Order
 
-Follow `docs/robot_kinematics_implementation_plan.md` in dependency order:
+Follow `docs/planning/robot_kinematics_implementation_plan.md` in dependency order:
 
 1. Phase 0: Qt/qmake project foundation.
 2. Phase 1: units, pose, canonical model, validation.
@@ -142,7 +142,7 @@ Ask the user before:
 
 ## Good Follow-Up Tasks
 
-If starting from the current implementation, first run the current build/test scripts and check `docs/robot_kinematics_implementation_plan.md` for remaining unchecked items. If no code exists in another checkout, start with:
+If starting from the current implementation, first run the current build/test scripts and check `docs/planning/robot_kinematics_implementation_plan.md` for remaining unchecked items. If no code exists in another checkout, start with:
 
 1. Scaffold `RobotKinematics.pro` and test target.
 2. Add `include/`, `src/`, `tests/`, and `presets/` directories.

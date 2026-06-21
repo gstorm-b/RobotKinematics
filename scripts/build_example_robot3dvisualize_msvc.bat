@@ -31,7 +31,7 @@ if "%VTK_ROOT%"=="" (
 
 set "ROOT=%~dp0.."
 set "PROJECT=%ROOT%\examples\Robot3DVizualize\Robot3DVizualize.pro"
-set "BUILD=%ROOT%\_build_examples_msvc\Robot3DVizualize"
+set "BUILD=%ROOT%\examples\Robot3DVizualize\build\msvc"
 
 call "%ROOT%\scripts\build_msvc.bat"
 if errorlevel 1 (

@@ -6,7 +6,7 @@ if "%VCVARS%"=="" set "VCVARS=C:\Program Files\Microsoft Visual Studio\2022\Comm
 
 set "ROOT=%~dp0.."
 set "SRC=%ROOT%\third_party\fcl"
-set "BUILD=%ROOT%\_build_third_party\fcl"
+set "BUILD=%ROOT%\third_party\build\fcl"
 set "INSTALL=%ROOT%\third_party\install\fcl"
 set "LIBCCD_INSTALL=%ROOT%\third_party\install\libccd"
 set "EIGEN_INCLUDE=%ROOT%\third_party\eigen"

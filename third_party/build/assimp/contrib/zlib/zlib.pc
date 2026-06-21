@@ -1,0 +1,13 @@
+prefix=D:/Project/RobotKinematics/third_party/install/assimp
+exec_prefix=D:/Project/RobotKinematics/third_party/install/assimp
+libdir=
+sharedlibdir=
+includedir=
+
+Name: zlib
+Description: zlib compression library
+Version: 
+
+Requires:
+Libs: -L${libdir} -L${sharedlibdir} -lz
+Cflags: -I${includedir}

@@ -30,7 +30,7 @@ scripts\test_msvc.bat
 
 This produces:
 
-- the static library under the build's `lib/` directory, and
+- the static library under the build's `lib/` directory, e.g. `build/msvc/lib`, and
 - the test executable `RobotKinematicsTests.exe` under the build's `tests/` directory.
 
 A successful run prints one line per suite ending in `PASS` and exits with code `0`.
@@ -51,9 +51,38 @@ scripts\build_mingw.bat
 scripts\test_mingw.bat
 ```
 
+## Build no-UI examples
+
+Two console examples are available for library users:
+
+```powershell
+scripts\build_example_nachi_mz04_cli_msvc.bat
+scripts\build_example_custom_preset_cli_msvc.bat
+```
+
+Outputs stay under each example folder:
+
+- `examples/NachiMZ04Cli/build/msvc/release/NachiMZ04Cli.exe`
+- `examples/CustomPresetCli/build/msvc/release/CustomPresetCli.exe`
+
+See each example README for the expected output and the manual qmake flow.
+
+## Third-party mesh backend dependencies
+
+Optional mesh-backend dependencies are kept in the repository under `third_party/`:
+
+- source checkouts: `third_party/<name>`;
+- Windows/MSVC build trees: `third_party/build/<name>`;
+- local install roots used by qmake scripts: `third_party/install/<name>`.
+
+The `scripts/build_third_party_*_msvc.bat` scripts are the supported path for building these
+dependencies on Windows 11 with MSVC/Visual Studio 2022. Set `VCVARS` if Visual Studio is installed
+outside the default location. Set `QT_CMAKE` if Qt's bundled CMake is not at
+`C:\Qt\Tools\CMake_64\bin\cmake.exe`.
+
 ### Shadow (out-of-source) build
 
-The scripts above are shadow builds that use `_build_msvc/` and `_build_mingw/`.
+The scripts above are shadow builds that use `build/msvc/` and `build/mingw/`.
 If you need to run qmake manually, create a build directory, run `qmake` pointing
 at the top-level `.pro`, then build:
 
@@ -78,7 +107,7 @@ INCLUDEPATH += \
     /path/to/RobotKinematics/include \
     /path/to/RobotKinematics/third_party/eigen
 
-LIBS += -L/path/to/RobotKinematics/build/lib -lRobotKinematics
+LIBS += -L/path/to/RobotKinematics/build/msvc/lib -lRobotKinematics
 
 QT += core
 CONFIG += c++17
@@ -103,7 +132,7 @@ target_include_directories(myapp PRIVATE
     /path/to/RobotKinematics/include
     /path/to/RobotKinematics/third_party/eigen)
 target_link_libraries(myapp PRIVATE
-    /path/to/RobotKinematics/build/lib/RobotKinematics.lib
+    /path/to/RobotKinematics/build/msvc/lib/RobotKinematics.lib
     Qt6::Core)
 ```
 

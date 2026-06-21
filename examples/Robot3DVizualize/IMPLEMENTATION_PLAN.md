@@ -13,7 +13,7 @@ This example is a consumer of the RobotKinematics API. It must not make VTK a de
 - Renderer: VTK embedded in Qt through `QVTKOpenGLNativeWidget`.
 - Robot preset: `RobotKinematics::Presets::nachiMZ04D()` only.
 - Kinematics features: FK, IK, and arm-config/posture classification.
-- Visual assets: STL files in `3d_model/` are the runtime source for Phase 1. STEP files are preserved as CAD source references.
+- Visual assets: STL files in `presets/Nachi/MZ04/` are the runtime source for Phase 1. STEP files are preserved as CAD source references.
 
 ## Non-Goals
 
@@ -22,7 +22,7 @@ This example is a consumer of the RobotKinematics API. It must not make VTK a de
 - No controller/network connection.
 - No path planning, dynamics, or trajectory generation.
 - No collision checking until the core primitive collision API from
-  `docs/collision_detection_plan.md` exists. After that lands, this example may visualize core
+  `docs/planning/collision_detection_plan.md` exists. After that lands, this example may visualize core
   collision results, but must not use VTK/STL mesh intersections as collision truth.
 - No physical robot accuracy claim.
 - No support for presets other than Nachi MZ04D in the first example.
@@ -94,7 +94,7 @@ Tasks:
 
 Current Phase 1 status:
 
-- The scene now loads all eight STL assets from `3d_model/` using `vtkSTLReader`.
+- The scene now loads all eight STL assets from `presets/Nachi/MZ04/` using `vtkSTLReader`.
 - Asset lookup starts from `QCoreApplication::applicationDirPath()` and walks fallback repo-relative locations for local development.
 - The scene adds a gradient background, a camera light, a wireframe ground plane, and an orientation marker widget.
 - Missing or unreadable meshes show a visible warning dialog and status-bar message instead of failing silently.

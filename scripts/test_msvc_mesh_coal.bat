@@ -7,7 +7,7 @@ set "ROOT=%~dp0.."
 if "%COAL_ROOT%"=="" set "COAL_ROOT=%ROOT%\third_party\install\coal"
 if "%ASSIMP_ROOT%"=="" set "ASSIMP_ROOT=%ROOT%\third_party\install\assimp"
 if "%BOOST_ROOT%"=="" set "BOOST_ROOT=%ROOT%\third_party\install\boost"
-set "BUILD=%ROOT%\_build_msvc_mesh_coal"
+set "BUILD=%ROOT%\build\msvc_mesh_coal"
 set "EXE=%BUILD%\tests\RobotKinematicsTests.exe"
 
 if not exist "%EXE%" (

@@ -18,7 +18,7 @@ setlocal
 if "%QT_MINGW_DIR%"=="" set "QT_MINGW_DIR=C:\Qt\6.8.2\mingw_64"
 if "%MINGW_DIR%"=="" set "MINGW_DIR=C:\Qt\Tools\mingw1310_64"
 set "ROOT=%~dp0.."
-set "BUILD=%ROOT%\_build_mingw"
+set "BUILD=%ROOT%\build\mingw"
 
 set "PATH=%QT_MINGW_DIR%\bin;%MINGW_DIR%\bin;%PATH%"
 

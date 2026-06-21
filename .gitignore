@@ -2,16 +2,8 @@
 /build/
 /_build*/
 /lib/
+/examples/*/build/
 /agent-skills
-
-# --- Optional local mesh-backend dependency checkouts/install roots ---
-# Keep Eigen tracked, but do not commit heavyweight optional backend sources or binaries.
-/third_party/assimp/
-/third_party/boost/
-/third_party/coal/
-/third_party/fcl/
-/third_party/install/
-/third_party/libccd/
 
 # --- qmake / make generated files (in-source) ---
 Makefile
@@ -57,5 +49,12 @@ ui_*.h
 
 # --- Generated mesh-simplification artifacts ---
 # tools/mesh_simplification regenerates these from the original mesh profile.
-/collision_profiles/simplified/
-/collision_profiles/*_simplified*.json
+/presets/Nachi/MZ04/simplified/
+/presets/Nachi/MZ04/*_simplified*.json
+
+# --- Tracked third-party dependency workspace ---
+# The project intentionally keeps optional mesh-backend dependency sources,
+# build trees, and install outputs under third_party/ for reproducible local
+# Windows/MSVC development.
+!/third_party/
+!/third_party/**

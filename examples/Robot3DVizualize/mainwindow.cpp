@@ -113,13 +113,8 @@ QString findAssetsDirectory()
 
     for (const QString& rootPath : candidateRoots) {
         const QDir rootDir(rootPath);
-        const QString directAssets = rootDir.filePath(QStringLiteral("3d_model"));
-        if (QDir(directAssets).exists()) {
-            return QDir(directAssets).absolutePath();
-        }
-
         const QString repoAssets =
-            rootDir.filePath(QStringLiteral("examples/Robot3DVizualize/3d_model"));
+            rootDir.filePath(QStringLiteral("presets/Nachi/MZ04"));
         if (QDir(repoAssets).exists()) {
             return QDir(repoAssets).absolutePath();
         }
@@ -748,8 +743,8 @@ void MainWindow::loadRobotVisuals()
 
     if (assetsDirectory_.isEmpty()) {
         loadErrors << QStringLiteral(
-            "Could not find the `3d_model` runtime asset directory. Build from the repository "
-            "root or keep the example next to `examples/Robot3DVizualize/3d_model`.");
+            "Could not find the Nachi runtime asset directory. Build from the repository "
+            "root or keep the STL assets under `presets/Nachi/MZ04`.");
     } else {
         const JointVector homeJoints = JointVector::fromDegrees(
             {homeDegrees(config_)[0], homeDegrees(config_)[1], homeDegrees(config_)[2],
@@ -1721,7 +1716,7 @@ void MainWindow::populateBackendControls()
         ui->meshBackendAvailabilityValueLabel->setText(
             QStringLiteral("Unavailable: %1. Rebuild RobotKinematics with the optional mesh backend "
                            "(scripts\\build_msvc_mesh_coal.bat) and relink the example to the "
-                           "_build_msvc_mesh_coal\\lib library to enable mesh modes.")
+                           "build\\msvc_mesh_coal\\lib library to enable mesh modes.")
                 .arg(QString::fromStdString(meshBackendInfo_.detail)));
     }
 

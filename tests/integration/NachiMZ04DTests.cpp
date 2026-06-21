@@ -62,9 +62,9 @@ const std::array<TeachPoint, 21> kTeachPoints = {{
 std::string nachiPresetPath()
 {
     const char* candidates[] = {
-        "../presets/nachi_mz04d.json",
-        "presets/nachi_mz04d.json",
-        "../../presets/nachi_mz04d.json",
+        "../presets/Nachi/MZ04/nachi_mz04d.json",
+        "presets/Nachi/MZ04/nachi_mz04d.json",
+        "../../presets/Nachi/MZ04/nachi_mz04d.json",
     };
     for (const char* candidate : candidates) {
         if (QFile(QString::fromUtf8(candidate)).exists()) {

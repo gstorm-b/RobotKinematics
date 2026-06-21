@@ -141,7 +141,7 @@
     }
   ],
   "metadata": {
-    "collisionProfile": "collision_profiles/virtual_6dof_test_arm_collision.json",
+    "collisionProfile": "presets/virtual_6dof_test_arm_collision.json",
     "purpose": "base_milestone_fixture"
   }
 }

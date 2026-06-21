@@ -98,7 +98,7 @@ Two corrections were required:
 | J6  | 0     | 72     | 0           | 0      |
 
 This reproduces all 21 reference poses to **<= 0.035 mm and <= 0.010 deg**. It is encoded as
-canonical joint origins in `src/Presets/NachiMZ04D.cpp` / `presets/nachi_mz04d.json` and
+canonical joint origins in `src/Presets/NachiMZ04D.cpp` / `presets/Nachi/MZ04/nachi_mz04d.json` and
 verified point-by-point in `tests/integration/NachiMZ04DTests.cpp`. Joint limits above are
 applied to the preset.
 

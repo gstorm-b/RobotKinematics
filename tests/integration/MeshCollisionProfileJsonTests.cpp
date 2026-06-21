@@ -28,7 +28,7 @@ std::string validMeshProfileJson()
     {
       "id": "upper_arm_mesh",
       "link": "link_2",
-      "path": "examples/Robot3DVizualize/3d_model/MZ04-01_j2.stl",
+      "path": "MZ04-01_j2.stl",
       "format": "stl",
       "sourceUnits": "mm",
       "scaleToMeters": 0.001,
@@ -51,7 +51,7 @@ std::string validMeshProfileJson()
     {
       "type": "visual_cad_stl",
       "title": "Draft mesh source",
-      "reference": "examples/Robot3DVizualize/3d_model",
+      "reference": "presets/Nachi/MZ04",
       "appliesTo": ["mesh_collision_geometry"]
     }
   ],

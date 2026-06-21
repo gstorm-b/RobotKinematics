@@ -10,8 +10,8 @@ if "%QT_MSVC_DIR%"=="" set "QT_MSVC_DIR=C:\Qt\6.8.2\msvc2022_64"
 if "%VCVARS%"=="" set "VCVARS=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
 
 set "ROOT=%~dp0.."
-set "LIB_BUILD=%ROOT%\_build_msvc"
-set "BUILD=%ROOT%\_build_tools_msvc\mesh_simplification"
+set "LIB_BUILD=%ROOT%\build\msvc"
+set "BUILD=%ROOT%\build\tools\mesh_simplification"
 
 if not exist "%LIB_BUILD%\lib\RobotKinematics.lib" (
     echo [ERROR] RobotKinematics library not built. Run scripts\build_msvc.bat first.

@@ -619,7 +619,8 @@ tests/
 docs/
   project_description.md
   robot_kinematics_spec.md
-  robot_kinematics_implementation_plan.md
+  planning/
+    robot_kinematics_implementation_plan.md
 ```
 
 ## Code Style
