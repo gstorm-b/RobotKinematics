@@ -19,6 +19,11 @@ UI_DIR = $$OUT_PWD/.ui
 SOURCES += \
     Adapters/DhAdapter.cpp \
     Adapters/UrdfAdapter.cpp \
+    Collision/BuiltInCollisionProfiles.cpp \
+    Collision/CollisionChecker.cpp \
+    Collision/CollisionProfileJsonLoader.cpp \
+    Collision/CollisionProfileValidator.cpp \
+    Collision/StlPrimitiveAuthoringHelper.cpp \
     Core/LibraryAnchor.cpp \
     Core/Pose.cpp \
     Core/Units.cpp \
@@ -43,6 +48,13 @@ HEADERS += \
     ../include/RobotKinematics/Core/Pose.h \
     ../include/RobotKinematics/Core/Result.h \
     ../include/RobotKinematics/Core/Units.h \
+    ../include/RobotKinematics/Collision/CollisionChecker.h \
+    ../include/RobotKinematics/Collision/CollisionGeometry.h \
+    ../include/RobotKinematics/Collision/CollisionProfile.h \
+    ../include/RobotKinematics/Collision/BuiltInCollisionProfiles.h \
+    ../include/RobotKinematics/Collision/CollisionProfileJsonLoader.h \
+    ../include/RobotKinematics/Collision/CollisionProfileValidator.h \
+    ../include/RobotKinematics/Collision/StlPrimitiveAuthoringHelper.h \
     ../include/RobotKinematics/Kinematics/ForwardKinematics.h \
     ../include/RobotKinematics/Kinematics/InverseKinematics.h \
     ../include/RobotKinematics/Kinematics/JointLimitValidator.h \

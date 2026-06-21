@@ -20,6 +20,7 @@ Phase 1 focuses on serial 6DOF industrial robots. The first implementation prese
 - Compute joint values from target TCP pose.
 - Validate whether a joint vector is inside configured joint limits.
 - Validate whether a target pose is reachable by the configured robot.
+- Validate whether a joint vector causes conservative self-collision, once the collision extension is enabled.
 - Configure base/user frames and tools.
 - Solve IK using previous joint state, seed joint state, posture constraints, and solver options.
 - Return either one best IK solution or multiple candidate solutions.
@@ -29,7 +30,7 @@ Phase 1 focuses on serial 6DOF industrial robots. The first implementation prese
 
 - No UI.
 - No physical robot calibration accuracy claim.
-- No collision checking.
+- No collision checking in the original phase 1 milestone. Primitive self-collision is a post-base extension documented below.
 - No path planning beyond kinematic validation and single-pose IK.
 - No dynamic model, torque, velocity planning, or trajectory generation.
 - No guaranteed support for SCARA, delta, parallel, 4DOF, 5DOF implementations in phase 1.
@@ -244,6 +245,106 @@ The library must support:
 - Active tool selection per FK/IK request.
 
 Frame/tool transforms must use the same `Pose` representation and SI units as the rest of the core.
+
+### Collision Detection Extension
+
+Collision detection is a post-base-library extension. The approved MVP is fast conservative
+self-collision for serial robot joint states using primitive geometry.
+
+Runtime collision checking must not use STL triangle meshes and must not depend on VTK. STL files may
+be used only by helper tooling that proposes primitive shapes for manual review.
+
+MVP collision shapes:
+
+- sphere;
+- capsule.
+
+Additional shapes such as box, cylinder, convex mesh, or triangle mesh require a separate scope
+decision after the primitive MVP is measured.
+
+Collision geometry is attached to canonical link ids:
+
+```cpp
+enum class CollisionShapeType {
+    Sphere,
+    Capsule
+};
+
+struct CollisionSphere {
+    double radius_m;
+};
+
+struct CollisionCapsule {
+    double radius_m;
+    double length_m;
+};
+
+struct CollisionGeometry {
+    std::string id;
+    std::string linkId;
+    Pose geometryToLink;
+    CollisionShapeType shapeType;
+    CollisionSphere sphere;
+    CollisionCapsule capsule;
+    double margin_m;
+    bool enabled;
+};
+
+struct DisabledCollisionPair {
+    std::string geometryA;
+    std::string geometryB;
+    std::string reason;
+};
+
+struct CollisionProfile {
+    std::string id;
+    std::string robotModel;
+    std::vector<CollisionGeometry> geometries;
+    std::vector<DisabledCollisionPair> disabledPairs;
+};
+```
+
+Collision checks consume a `SerialRobotConfig`, `CollisionProfile`, and `JointVector`. FK places
+each geometry in the base frame, pair filtering removes disabled or adjacent-contact pairs, and the
+checker runs primitive distance tests.
+
+Collision result status semantics:
+
+- `KinematicsStatus::Ok` means the check executed successfully.
+- A found collision is represented by `CollisionCheckResult::hasCollision == true`.
+- Do not add `CollisionDetected` to `KinematicsStatus` for the MVP.
+- Existing error statuses cover invalid robot config, invalid request, joint-dimension mismatch,
+  and numerical/internal errors.
+
+Recommended result shape:
+
+```cpp
+struct CollisionCheckRequest {
+    JointVector joints;
+    double safetyMargin_m = 0.0;
+    bool returnAllPairs = true;
+};
+
+struct CollisionPairResult {
+    std::string geometryA;
+    std::string geometryB;
+    std::string linkA;
+    std::string linkB;
+    bool colliding;
+    double distance_m;
+};
+
+struct CollisionCheckResult {
+    KinematicsStatus status;
+    bool hasCollision;
+    std::vector<CollisionPairResult> pairs;
+    std::string message;
+};
+```
+
+Collision profiles use SI units. Runtime code should load collision profiles explicitly from a
+separate `robot-kinematics-collision/v1` artifact. Preset JSON may reference collision profiles in
+`metadata`, but collision data is not required by `robot-kinematics-preset/v1`.
 
 ### Presets
 
@@ -472,6 +573,10 @@ include/
       IKSolver.h
       NumericalIKSolver.h
       AnalyticIKSolver.h
+    Collision/
+      CollisionGeometry.h
+      CollisionProfile.h
+      CollisionChecker.h
     Posture/
       ArmPosture.h
       PostureResolver.h
@@ -546,6 +651,8 @@ Conventions:
 - Numerical IK convergence behavior.
 - IK solution ranking.
 - Posture resolver mapping.
+- Collision profile validation, primitive distance checks, pair filtering, and FK-based geometry
+  placement once the collision extension is implemented.
 
 ### Integration Tests
 
@@ -580,6 +687,7 @@ For Virtual6DofTestArm, phase 1 must support posture classification and posture-
 - Keep core calculations in meter/radian.
 - Use explicit helper names for mm/degree APIs.
 - Keep FK/IK core independent from URDF parser details.
+- Keep collision runtime independent from STL/VTK triangle mesh logic.
 - Return structured statuses for IK failure modes.
 - Add tests for every public behavior added.
 - Document solver assumptions and limitations.
@@ -589,6 +697,7 @@ For Virtual6DofTestArm, phase 1 must support posture classification and posture-
 - Changing unit convention.
 - Changing public API names.
 - Adding third-party dependencies beyond Eigen/Qt/test framework.
+- Adding runtime mesh collision or external collision libraries.
 - Claiming physical robot accuracy.
 - Expanding implementation scope to SCARA, delta, parallel, 4DOF, or 5DOF.
 - Making URDF the canonical model.
@@ -600,6 +709,7 @@ For Virtual6DofTestArm, phase 1 must support posture classification and posture-
 - Do not claim numerical `solveAll` is mathematically exhaustive.
 - Do not hard-code vendor posture names as universal base-class behavior.
 - Do not mix robot preset data directly into solver logic.
+- Do not treat primitive collision profiles as physical safety certification.
 
 ## Base Code Milestone Success Criteria
 
@@ -634,3 +744,4 @@ Real preset validation is complete when:
 ## Validation Follow-Ups
 
 - Solver defaults may need tuning after numerical validation, but the initial defaults are now specified above.
+- Primitive collision profile dimensions need review and tuning after the collision module lands.

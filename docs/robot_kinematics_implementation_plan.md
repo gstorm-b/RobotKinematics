@@ -2,7 +2,7 @@
 
 ## Overview
 
-Implement RobotKinematics as a reusable C++/Eigen backend library. The first deliverable is a serial 6DOF kinematics core with canonical robot config, FK, numerical IK, frame/tool support, posture-aware solution selection, custom presets, and one virtual implementation preset.
+Implement RobotKinematics as a reusable C++/Eigen backend library. The first deliverable is a serial 6DOF kinematics core with canonical robot config, FK, numerical IK, frame/tool support, posture-aware solution selection, custom presets, and one virtual implementation preset. After the base milestone, the next approved extension is primitive self-collision detection.
 
 The plan intentionally builds the foundation first, then solver behavior, then a project-owned virtual preset, then real vendor presets after source data is provided. SCARA, delta, parallel, and analytic IK are designed for but not implemented in phase 1 unless separately approved.
 
@@ -40,6 +40,12 @@ Real preset ingestion + validation
     |
     v
 Adapters: DH/URDF
+    |
+    v
+Analytic IK plugin
+    |
+    v
+Primitive collision detection
 ```
 
 ## Architecture Decisions
@@ -58,6 +64,7 @@ Adapters: DH/URDF
 - Presets are JSON files. Virtual6DofTestArm is the first required preset and has a built-in C++ fallback. Kawasaki RS007N and Nachi MZ04D are integrated after source data is provided.
 - Preset JSON schema is `robot-kinematics-preset/v1` and stores solver-facing values in SI units only.
 - IK/validation status uses `KinematicsStatus`.
+- Collision detection is primitive-first: runtime checks use sphere/capsule profiles, not STL triangle meshes. STL may be used only by helper tooling that proposes primitives for manual review.
 
 ## Phase 0: Project Foundation
 
@@ -668,6 +675,198 @@ to machine precision). Other morphologies report unsupported and fall back to th
 
 **Estimated scope:** Medium to Large. Break further before implementation.
 
+## Phase 9: Primitive Collision Detection
+
+### Task 9.1: Define Collision Public API
+
+**Description:** Add collision profile, primitive shape, request, result, and checker API contracts.
+
+**Acceptance criteria:**
+- [x] Public collision headers exist under `include/RobotKinematics/Collision`.
+- [x] MVP runtime shapes are sphere and capsule.
+- [x] Collision profiles attach geometry to canonical link ids through `geometryToLink`.
+- [x] `CollisionCheckResult::hasCollision` represents collision; `KinematicsStatus::Ok` still means the check executed successfully.
+- [x] No `CollisionDetected` status is added for the MVP.
+
+**Verification:**
+- [x] Compile/API tests validate request/result/profile construction.
+
+**Dependencies:** Phase 2 FK and current model types.
+
+**Files likely touched:**
+- `include/RobotKinematics/Collision/...`
+- `src/Collision/...`
+- `tests/unit/CollisionApiTests.cpp`
+- qmake project files.
+
+**Estimated scope:** Small.
+
+### Task 9.2: Implement Collision Profile Validation
+
+**Description:** Validate collision profile ids, geometry references, primitive dimensions, and disabled pairs.
+
+**Acceptance criteria:**
+- [x] Duplicate geometry ids are rejected.
+- [x] Missing link ids are rejected.
+- [x] Non-positive sphere radius, capsule radius, or capsule length are rejected.
+- [x] Disabled-pair references must point to existing geometry ids.
+- [x] Same-link and adjacent-contact pair behavior is documented.
+
+**Verification:**
+- [x] Unit tests cover valid profile, duplicate ids, invalid dimensions, missing links, and invalid disabled pairs.
+
+**Dependencies:** Task 9.1.
+
+**Files likely touched:**
+- `include/RobotKinematics/Collision/CollisionProfileValidator.h`
+- `src/Collision/CollisionProfileValidator.cpp`
+- `tests/unit/CollisionProfileValidatorTests.cpp`
+
+**Estimated scope:** Small to Medium.
+
+### Task 9.3: Implement FK Placement And Pair Filtering
+
+**Description:** Use FK to transform enabled collision geometries into the base frame and generate candidate pairs.
+
+**Acceptance criteria:**
+- [x] Geometry base pose is computed as `linkPoseInBase * geometryToLink`.
+- [x] Disabled geometry and disabled pairs are skipped.
+- [x] Pair generation is deterministic.
+- [x] Invalid joint dimension returns structured failure.
+
+**Verification:**
+- [x] Unit tests use a tiny serial fixture to verify transformed primitive poses and filtered pairs.
+
+**Dependencies:** Task 9.2 and `ForwardKinematics::computeChain`.
+
+**Files likely touched:**
+- `include/RobotKinematics/Collision/CollisionChecker.h`
+- `src/Collision/CollisionChecker.cpp`
+- `tests/unit/CollisionCheckerTests.cpp`
+
+**Estimated scope:** Medium.
+
+### Task 9.4: Implement Sphere/Capsule Self-Collision
+
+**Description:** Add broad-phase and narrow-phase primitive distance checks for sphere and capsule geometry.
+
+**Acceptance criteria:**
+- [x] Broad phase uses cheap bounding spheres.
+- [x] Narrow phase supports sphere-sphere, sphere-capsule, and capsule-capsule.
+- [x] Result contains colliding pair ids, link ids, and clearance/penetration distance.
+- [x] Request-level `safetyMargin_m` is applied consistently.
+- [x] Checker can return all colliding pairs or stop after the first collision according to request.
+
+**Verification:**
+- [x] Unit tests cover separated, touching, overlapping, and safety-margin cases.
+- [x] Integration tests cover at least one self-colliding and one non-colliding robot fixture.
+
+**Dependencies:** Task 9.3.
+
+**Files likely touched:**
+- `src/Collision/CollisionChecker.cpp`
+- `tests/unit/CollisionPrimitiveDistanceTests.cpp`
+- `tests/unit/CollisionCheckerTests.cpp`
+
+**Estimated scope:** Medium.
+
+### Task 9.5: Add Collision Profile JSON Loader
+
+**Description:** Add a separate `robot-kinematics-collision/v1` JSON loader.
+
+**Acceptance criteria:**
+- [x] Collision profiles are loaded from standalone JSON artifacts.
+- [x] Preset JSON loader is not required to parse collision fields.
+- [x] Optional preset `metadata` may reference an external collision profile.
+- [x] Loader preserves source references and metadata.
+
+**Verification:**
+- [x] JSON loader tests cover valid and invalid profiles.
+- [x] JSON profile and C++ fallback profile produce equivalent runtime objects where a built-in profile exists.
+
+**Dependencies:** Task 9.2.
+
+**Files likely touched:**
+- `include/RobotKinematics/Collision/CollisionProfileJsonLoader.h`
+- `src/Collision/CollisionProfileJsonLoader.cpp`
+- `collision_profiles/*.json`
+- `tests/integration/CollisionProfileJsonTests.cpp`
+
+**Estimated scope:** Medium.
+
+### Task 9.6: Add Conservative Built-In Collision Profiles
+
+**Description:** Add conservative primitive profiles for the virtual arm and Nachi MZ04D.
+
+**Acceptance criteria:**
+- [x] `Virtual6DofTestArm` has a project-owned primitive collision profile.
+- [x] `NachiMZ04D` has a conservative primitive collision profile based on reviewed visual/CAD information.
+- [x] Source notes state that real robot collision geometry is an approximation and not safety-rated.
+- [x] Adjacent or allowed-contact pairs include explicit disabled-pair reasons.
+
+**Verification:**
+- [x] Profile validation passes.
+- [x] Collision checker tests cover representative safe and self-colliding joint states.
+
+**Dependencies:** Tasks 9.4 and 9.5.
+
+**Files likely touched:**
+- `include/RobotKinematics/Presets/...` or `include/RobotKinematics/Collision/...`
+- `src/Presets/...` or `src/Collision/...`
+- `collision_profiles/virtual_6dof_test_arm_collision.json`
+- `collision_profiles/nachi_mz04d_collision.json`
+- `tests/integration/...`
+
+**Estimated scope:** Medium.
+
+### Task 9.7: Add STL-To-Primitive Authoring Helper
+
+**Description:** Add helper tooling that reads STL assets and proposes primitive sphere/capsule values for manual review.
+
+**Acceptance criteria:**
+- [x] Helper can read simple binary/ascii STL fixtures or clearly documents supported STL flavor.
+- [x] Helper computes bounding box, centroid, and candidate sphere/capsule dimensions.
+- [x] Helper emits draft `robot-kinematics-collision/v1` snippets.
+- [x] Helper output is marked as draft/manual-review only.
+- [x] Core runtime collision checker does not depend on this helper.
+
+**Verification:**
+- [x] Tests cover tiny synthetic STL fixtures.
+
+**Dependencies:** Task 9.1. Can run after Task 9.5 if JSON output is implemented first.
+
+**Files likely touched:**
+- `tools/` or `scripts/`
+- `tests/fixtures/stl/...`
+- `tests/unit/...`
+
+**Estimated scope:** Medium.
+
+### Task 9.8: Integrate Collision Status Into Qt/VTK Example
+
+**Description:** Let the existing Nachi visualizer call the collision API and highlight colliding links.
+
+**Acceptance criteria:**
+- [x] Persistent collision controls/status are designed in `mainwindow.ui`.
+- [x] QSS changes live in `.qss` and are loaded through `.qrc`.
+- [x] The existing `Robot3DVizualize.pro` remains the canonical Qt Creator project.
+- [x] Colliding visual actors are highlighted using pair-level result data.
+- [x] VTK remains example-only; core collision truth comes from primitive profiles.
+
+**Verification:**
+- [x] Example builds with VTK.
+- [x] Core test suite still builds/runs without VTK.
+- [ ] Manual QA covers one safe and one colliding joint state.
+
+**Dependencies:** Task 9.6.
+
+**Files likely touched:**
+- `examples/Robot3DVizualize/...`
+- `examples/Robot3DVizualize/README.md`
+- `examples/Robot3DVizualize/IMPLEMENTATION_PLAN.md`
+
+**Estimated scope:** Medium.
+
 ## Risks And Mitigations
 
 | Risk | Impact | Mitigation |
@@ -682,6 +881,9 @@ to machine precision). Other morphologies report unsupported and fall back to th
 | Posture semantics differ by vendor | Medium | Keep base posture generic; implement per-preset resolver. |
 | URDF cannot represent all canonical metadata | Medium | Treat URDF as adapter only; warn on metadata loss. |
 | Scope expands to many robot families too early | High | Keep phase 1 serial 6DOF only; require approval for new robot family implementation. |
+| Collision checking becomes too heavy | High | Keep runtime primitive-only for MVP; use STL only as an authoring helper input; avoid VTK or mesh dependencies in core. |
+| Primitive collision geometry is treated as safety-rated | High | Document profiles as conservative approximations; return diagnostics but make no physical safety claim. |
+| Adjacent robot links report false collisions | Medium | Require explicit disabled-pair rules with reasons in each collision profile. |
 
 ## Parallelization Opportunities
 
@@ -707,6 +909,7 @@ Needs coordination:
 - Preset data and posture resolver.
 - Solver residual tolerance and acceptance tests.
 - URDF adapter and canonical model field changes.
+- Collision profile dimensions and disabled-pair rules.
 
 ## Open Questions To Resolve Later
 
@@ -716,3 +919,4 @@ Needs coordination:
 
 - Check whether solver defaults need tuning after empirical validation.
 - How much analytic IK work should be pulled earlier if numerical multi-seed posture coverage is not enough for Kawasaki/Nachi.
+- Whether to add box/cylinder primitives after sphere/capsule collision performance and ergonomics are measured.

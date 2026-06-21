@@ -17,8 +17,8 @@ RobotKinematics is a C++17 / Eigen backend for serial industrial-robot kinematic
 - robot presets (built-in C++ and `robot-kinematics-preset/v1` JSON);
 - adapters for standard DH input and URDF import/export.
 
-There is **no UI, no path planning, no collision checking, and no dynamics** — this is a
-kinematics math backend only.
+There is **no UI, no path planning, and no dynamics**. Primitive self-collision detection is planned
+as a lightweight extension; until that module lands, the shipped API is a kinematics math backend.
 
 ## Contents
 

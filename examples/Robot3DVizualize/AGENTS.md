@@ -108,6 +108,9 @@ For each handoff:
 - Do not claim the STL visual alignment is calibrated to the real robot.
 - Do not bypass `Robot3DVizualize.pro` when adding files or build settings.
 - Do not hard-code UI layout or stylesheet contents in C++.
-- Do not implement Kawasaki, SCARA, delta, collision checking, or path planning here.
+- Do not implement Kawasaki, SCARA, delta, or path planning here.
+- Do not implement collision checking in this example until the core primitive collision API exists;
+  after that, visualize core collision results only and do not use VTK/STL mesh intersections as
+  collision truth.
 - Do not put Nachi-specific visual data into the core solver.
 - Do not silently convert units.

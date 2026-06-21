@@ -4,6 +4,7 @@
 
 #include <QCoreApplication>
 #include <QCheckBox>
+#include <QColor>
 #include <QDir>
 #include <QDoubleSpinBox>
 #include <QFileInfo>
@@ -16,12 +17,16 @@
 
 #include <QVTKOpenGLNativeWidget.h>
 
+#include <RobotKinematics/Collision/BuiltInCollisionProfiles.h>
+#include <RobotKinematics/Collision/CollisionProfileJsonLoader.h>
+#include <RobotKinematics/Collision/CollisionProfileValidator.h>
 #include <RobotKinematics/Core/Units.h>
 #include <RobotKinematics/Kinematics/JointLimitValidator.h>
 #include <RobotKinematics/Presets/NachiMZ04D.h>
 
 #include <vtkActor.h>
 #include <vtkAxesActor.h>
+#include <vtkCylinderSource.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkLight.h>
 #include <vtkLineSource.h>
@@ -29,12 +34,15 @@
 #include <vtkNamedColors.h>
 #include <vtkOrientationMarkerWidget.h>
 #include <vtkPlaneSource.h>
+#include <vtkPolyDataAlgorithm.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
 #include <vtkRenderer.h>
+#include <vtkSphereSource.h>
 #include <vtkSTLReader.h>
 
 #include <array>
+#include <algorithm>
 #include <optional>
 
 using namespace RobotKinematics;
@@ -58,7 +66,7 @@ constexpr std::array<RobotVisualPartSpec, 8> kRobotParts = {{
     {"j4", "Joint 4", "MZ04-01_j4.stl", "LightSkyBlue", "link_4"},
     {"j5", "Joint 5", "MZ04-01_j5.stl", "SteelBlue", "link_5"},
     {"j6", "Joint 6", "MZ04-01_j6.stl", "DodgerBlue", "flange"},
-    {"tool", "Centering Tool Mesh", "Centering_tool.stl", "Tomato", "flange"},
+    {"tool", "Centering Tool Mesh", "Centering_tool.stl", "DarkOrange", "flange"},
 }};
 
 constexpr std::array<double, 6> kMidPointDegrees = {
@@ -72,6 +80,18 @@ constexpr std::array<double, 6> kTeachPoint1Degrees = {
 
 constexpr std::array<double, 6> kTeachPoint20Degrees = {
     -0.00219726, 0.00430813, 179.996, 0.00459559, 0.0046875, -0.000121055,
+};
+
+constexpr std::array<double, 3> kCollisionHighlightColor = {
+    0.92, 0.28, 0.18,
+};
+
+constexpr std::array<double, 3> kPrimitiveSphereColor = {
+    0.35, 0.86, 0.72,
+};
+
+constexpr std::array<double, 3> kPrimitiveCapsuleColor = {
+    0.98, 0.78, 0.34,
 };
 
 QString findAssetsDirectory()
@@ -106,9 +126,91 @@ QString findAssetsDirectory()
     return QString();
 }
 
+QStringList searchRootPaths()
+{
+    const QString appDirPath = QCoreApplication::applicationDirPath();
+
+    QStringList candidateRoots;
+    candidateRoots << appDirPath << QDir::currentPath();
+
+    QDir searchDir(appDirPath);
+    for (int depth = 0; depth < 8; ++depth) {
+        candidateRoots << searchDir.absolutePath();
+        if (!searchDir.cdUp()) {
+            break;
+        }
+    }
+
+    candidateRoots.removeDuplicates();
+    return candidateRoots;
+}
+
+QString findRepoRelativePath(const QString& relativePath)
+{
+    if (relativePath.isEmpty()) {
+        return QString();
+    }
+
+    const QFileInfo directInfo(relativePath);
+    if (directInfo.exists()) {
+        return directInfo.absoluteFilePath();
+    }
+
+    for (const QString& rootPath : searchRootPaths()) {
+        const QString candidate = QDir(rootPath).filePath(relativePath);
+        if (QFileInfo(candidate).exists()) {
+            return QFileInfo(candidate).absoluteFilePath();
+        }
+    }
+
+    return QString();
+}
+
 QString formatNumber(double value, int decimals)
 {
     return QString::number(value, 'f', decimals);
+}
+
+vtkSmartPointer<vtkMatrix4x4> toVtkMatrix(const Eigen::Matrix4d& values)
+{
+    vtkSmartPointer<vtkMatrix4x4> matrix = vtkSmartPointer<vtkMatrix4x4>::New();
+    for (int row = 0; row < 4; ++row) {
+        for (int column = 0; column < 4; ++column) {
+            matrix->SetElement(row, column, values(row, column));
+        }
+    }
+    return matrix;
+}
+
+Eigen::Matrix4d scaledTransformMm(const Pose& poseInBase,
+                                  const Eigen::Matrix3d& sourceToGeometryRotation,
+                                  const Eigen::Vector3d& scaleMm)
+{
+    Eigen::Matrix4d matrix = Eigen::Matrix4d::Identity();
+    matrix.block<3, 3>(0, 0) =
+        poseInBase.isometry().linear() * sourceToGeometryRotation * scaleMm.asDiagonal();
+    matrix.block<3, 1>(0, 3) = poseInBase.translation_m() * 1000.0;
+    return matrix;
+}
+
+vtkSmartPointer<vtkActor> makePrimitiveActor(vtkPolyDataAlgorithm* source,
+                                             const std::array<double, 3>& color,
+                                             double opacity)
+{
+    vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputConnection(source->GetOutputPort());
+
+    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+    actor->GetProperty()->SetColor(color[0], color[1], color[2]);
+    actor->GetProperty()->SetOpacity(opacity);
+    actor->GetProperty()->SetRepresentationToSurface();
+    actor->GetProperty()->SetEdgeVisibility(1);
+    actor->GetProperty()->SetEdgeColor(0.12, 0.16, 0.19);
+    actor->GetProperty()->SetSpecular(0.12);
+    actor->GetProperty()->SetSpecularPower(8.0);
+    actor->VisibilityOff();
+    return actor;
 }
 
 std::array<double, 6> midpointDegrees(const SerialRobotConfig& config)
@@ -228,6 +330,7 @@ MainWindow::MainWindow(QWidget *parent)
     setupUiState();
     connectSignals();
     loadRobotVisuals();
+    loadCollisionDebugVisuals();
 
     setJointDegrees(homeDegrees(config_));
     resetTargetToCurrentTcp();
@@ -299,6 +402,8 @@ void MainWindow::setupModelState()
                              QStringLiteral("The Nachi posture resolver could not be created. "
                                             "Posture controls will remain disabled."));
     }
+
+    loadCollisionProfile();
 }
 
 void MainWindow::setupUiState()
@@ -310,13 +415,17 @@ void MainWindow::setupUiState()
     populateJointControls();
     populatePostureControls();
     populateSampleButtons();
+    populateCollisionControls();
     populateDebugControls();
 
     ui->ikResultsTableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->ikResultsTableWidget->horizontalHeader()->setStretchLastSection(true);
     ui->ikResultsTableWidget->verticalHeader()->setVisible(false);
+    ui->collisionPairsTableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->collisionPairsTableWidget->horizontalHeader()->setStretchLastSection(true);
+    ui->collisionPairsTableWidget->verticalHeader()->setVisible(false);
 
-    ui->sceneTitleLabel->setText(QStringLiteral("VTK Scene (visual world in CAD millimeters)"));
+    ui->sceneTitleLabel->setText(QStringLiteral("Simulation scene (visual world in millimeters unit)"));
     ui->jointStatusLabel->setText(QStringLiteral("Joint state not evaluated yet."));
     ui->ikStatusLabel->setText(QStringLiteral("IK status will appear here."));
 
@@ -351,6 +460,10 @@ void MainWindow::connectSignals()
             [this]() { solveInverseKinematics(true); });
     connect(ui->applySelectedSolutionButton, &QPushButton::clicked, this, &MainWindow::applySelectedIkSolution);
     connect(ui->ikResultsTableWidget, &QTableWidget::itemSelectionChanged, this, &MainWindow::updateActionState);
+    connect(ui->collisionSafetyMarginSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+            [this](double) { applyJointStateToSceneAndReadouts(); });
+    connect(ui->showPrimitiveShapesCheckBox, &QCheckBox::toggled, this,
+            [this](bool) { applyDebugVisualState(); });
 
     for (QCheckBox* checkBox : partVisibleCheckBoxes()) {
         connect(checkBox, &QCheckBox::toggled, this, [this](bool) { applyDebugVisualState(); });
@@ -443,6 +556,82 @@ void MainWindow::populateSampleButtons()
         QStringLiteral("Teach-pendant measurement point 20 from docs/preset_references/nachi-mz04d.md"));
 }
 
+void MainWindow::populateCollisionControls()
+{
+    ui->collisionSafetyMarginSpinBox->setSuffix(QStringLiteral(" mm"));
+    ui->showPrimitiveShapesCheckBox->setChecked(false);
+    ui->showPrimitiveShapesCheckBox->setEnabled(collisionProfileAvailable_);
+    ui->collisionProfileValueLabel->setText(
+        collisionProfileAvailable_ ? collisionProfileSource_ : QStringLiteral("Unavailable"));
+    ui->collisionProfileNoteLabel->setText(
+        collisionProfileNote_.isEmpty()
+            ? QStringLiteral("Collision truth comes from conservative primitives, not STL meshes. Use the checkbox below to render the runtime sphere/capsule approximation directly in the scene. Non-colliding pair distances are diagnostic and conservative.")
+            : collisionProfileNote_ + QStringLiteral(" Use the checkbox below to render the runtime sphere/capsule approximation directly in the scene. Non-colliding pair distances are diagnostic and conservative."));
+    ui->collisionStatusLabel->setText(
+        collisionProfileAvailable_
+            ? QStringLiteral("Collision status will update with the current joint state.")
+            : QStringLiteral("Collision checking is unavailable until a valid primitive profile loads."));
+}
+
+void MainWindow::loadCollisionDebugVisuals()
+{
+    primitiveDebugStates_.clear();
+    if (!collisionProfileAvailable_) {
+        return;
+    }
+
+    for (const CollisionGeometry& geometry : collisionProfile_.geometries) {
+        if (!geometry.enabled) {
+            continue;
+        }
+
+        PrimitiveDebugState state;
+        state.geometryId = geometry.id;
+        state.linkId = geometry.linkId;
+        state.shapeType = geometry.shape.type;
+        state.geometryToLink = geometry.geometryToLink;
+
+        if (geometry.shape.type == CollisionShapeType::Sphere) {
+            vtkSmartPointer<vtkSphereSource> sphere = vtkSmartPointer<vtkSphereSource>::New();
+            sphere->SetRadius(1.0);
+            sphere->SetPhiResolution(24);
+            sphere->SetThetaResolution(24);
+            state.radius_m = geometry.shape.sphere.radius_m;
+            state.baseColorRgb = kPrimitiveSphereColor;
+            state.bodyActor = makePrimitiveActor(sphere, state.baseColorRgb, 0.28);
+            renderer_->AddActor(state.bodyActor);
+        } else {
+            vtkSmartPointer<vtkCylinderSource> cylinder = vtkSmartPointer<vtkCylinderSource>::New();
+            cylinder->SetRadius(1.0);
+            cylinder->SetHeight(1.0);
+            cylinder->SetResolution(28);
+            cylinder->CappingOn();
+
+            vtkSmartPointer<vtkSphereSource> capStart = vtkSmartPointer<vtkSphereSource>::New();
+            capStart->SetRadius(1.0);
+            capStart->SetPhiResolution(20);
+            capStart->SetThetaResolution(20);
+
+            vtkSmartPointer<vtkSphereSource> capEnd = vtkSmartPointer<vtkSphereSource>::New();
+            capEnd->SetRadius(1.0);
+            capEnd->SetPhiResolution(20);
+            capEnd->SetThetaResolution(20);
+
+            state.radius_m = geometry.shape.capsule.radius_m;
+            state.length_m = geometry.shape.capsule.length_m;
+            state.baseColorRgb = kPrimitiveCapsuleColor;
+            state.bodyActor = makePrimitiveActor(cylinder, state.baseColorRgb, 0.24);
+            state.capStartActor = makePrimitiveActor(capStart, state.baseColorRgb, 0.24);
+            state.capEndActor = makePrimitiveActor(capEnd, state.baseColorRgb, 0.24);
+            renderer_->AddActor(state.bodyActor);
+            renderer_->AddActor(state.capStartActor);
+            renderer_->AddActor(state.capEndActor);
+        }
+
+        primitiveDebugStates_.push_back(state);
+    }
+}
+
 void MainWindow::populateDebugControls()
 {
     const std::array<QCheckBox*, 8> visible = partVisibleCheckBoxes();
@@ -510,7 +699,8 @@ void MainWindow::loadRobotVisuals()
 
             vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
             actor->SetMapper(mapper);
-            actor->GetProperty()->SetColor(colors->GetColor3d(spec.colorName).GetData());
+            const auto baseColor = colors->GetColor3d(spec.colorName);
+            actor->GetProperty()->SetColor(baseColor[0], baseColor[1], baseColor[2]);
             actor->GetProperty()->SetInterpolationToPhong();
             actor->GetProperty()->SetSpecular(0.18);
             actor->GetProperty()->SetSpecularPower(18.0);
@@ -541,6 +731,7 @@ void MainWindow::loadRobotVisuals()
             state.linkId = spec.linkId;
             state.homeLinkInBase = poseForLinkId(homeChain, spec.linkId);
             state.homeVisualCorrection = visualHomeCorrectionForPartKey(state.key);
+            state.baseColorRgb = {baseColor[0], baseColor[1], baseColor[2]};
             state.jointAxisIndex = jointAxisIndexForPartKey(state.key);
             state.isLoaded = true;
             state.actor = actor;
@@ -580,6 +771,7 @@ void MainWindow::applyJointStateToSceneAndReadouts()
     updatePoseReadouts(chain);
     updateJointStatus(joints);
     updateCurrentPosture(joints);
+    updateCollisionState(joints);
     updateActionState();
 
     renderWindow_->Render();
@@ -623,7 +815,58 @@ void MainWindow::updateSceneFromChain(const FkChain& chain)
         }
     }
 
+    updateCollisionDebugVisuals(chain);
+
     applyDebugVisualState();
+}
+
+void MainWindow::updateCollisionDebugVisuals(const FkChain& chain)
+{
+    if (!collisionProfileAvailable_) {
+        return;
+    }
+
+    const Eigen::Matrix3d cylinderSourceToGeometry =
+        Eigen::AngleAxisd(0.5 * 3.14159265358979323846, Eigen::Vector3d::UnitX()).toRotationMatrix();
+
+    for (PrimitiveDebugState& state : primitiveDebugStates_) {
+        const auto linkIt = chain.linkPosesInBase.find(state.linkId);
+        if (linkIt == chain.linkPosesInBase.end()) {
+            continue;
+        }
+
+        const Pose geometryInBase = linkIt->second * state.geometryToLink;
+        if (state.shapeType == CollisionShapeType::Sphere) {
+            const Eigen::Vector3d sphereScaleMm = Eigen::Vector3d::Constant(state.radius_m * 1000.0);
+            if (state.bodyActor) {
+                state.bodyActor->SetUserMatrix(
+                    toVtkMatrix(scaledTransformMm(geometryInBase, Eigen::Matrix3d::Identity(), sphereScaleMm)));
+            }
+            continue;
+        }
+
+        const Eigen::Vector3d capsuleScaleMm(
+            state.radius_m * 1000.0,
+            state.length_m * 1000.0,
+            state.radius_m * 1000.0);
+        if (state.bodyActor) {
+            state.bodyActor->SetUserMatrix(
+                toVtkMatrix(scaledTransformMm(geometryInBase, cylinderSourceToGeometry, capsuleScaleMm)));
+        }
+
+        const double halfLength = 0.5 * state.length_m;
+        const Eigen::Vector3d sphereScaleMm = Eigen::Vector3d::Constant(state.radius_m * 1000.0);
+        const Pose startPose = geometryInBase * Pose::fromXYZRPY_m_rad(0.0, 0.0, -halfLength, 0.0, 0.0, 0.0);
+        const Pose endPose = geometryInBase * Pose::fromXYZRPY_m_rad(0.0, 0.0, halfLength, 0.0, 0.0, 0.0);
+        if (state.capStartActor) {
+            state.capStartActor->SetUserMatrix(
+                toVtkMatrix(scaledTransformMm(startPose, Eigen::Matrix3d::Identity(), sphereScaleMm)));
+        }
+        if (state.capEndActor) {
+            state.capEndActor->SetUserMatrix(
+                toVtkMatrix(scaledTransformMm(endPose, Eigen::Matrix3d::Identity(), sphereScaleMm)));
+        }
+    }
 }
 
 void MainWindow::applyDebugVisualState()
@@ -635,6 +878,9 @@ void MainWindow::applyDebugVisualState()
     for (std::size_t index = 0; index < visualParts_.size() && index < visible.size(); ++index) {
         VisualPartState& part = visualParts_[index];
         if (part.actor) {
+            const bool colliding = collidingLinkIds_.find(part.linkId) != collidingLinkIds_.end();
+            const std::array<double, 3>& color = colliding ? kCollisionHighlightColor : part.baseColorRgb;
+            part.actor->GetProperty()->SetColor(color[0], color[1], color[2]);
             part.actor->SetVisibility(part.isLoaded && visible[index]->isChecked());
         }
         if (part.originActor) {
@@ -643,6 +889,27 @@ void MainWindow::applyDebugVisualState()
         if (part.axisActor) {
             const bool hasAxis = part.jointAxisIndex >= 0;
             part.axisActor->SetVisibility(part.isLoaded && hasAxis && axes[index]->isChecked());
+        }
+    }
+
+    const bool showPrimitiveShapes =
+        collisionProfileAvailable_ && ui->showPrimitiveShapesCheckBox->isChecked();
+    for (PrimitiveDebugState& primitive : primitiveDebugStates_) {
+        const bool colliding =
+            collidingGeometryIds_.find(primitive.geometryId) != collidingGeometryIds_.end();
+        const std::array<double, 3>& color = colliding ? kCollisionHighlightColor : primitive.baseColorRgb;
+
+        if (primitive.bodyActor) {
+            primitive.bodyActor->GetProperty()->SetColor(color[0], color[1], color[2]);
+            primitive.bodyActor->SetVisibility(showPrimitiveShapes ? 1 : 0);
+        }
+        if (primitive.capStartActor) {
+            primitive.capStartActor->GetProperty()->SetColor(color[0], color[1], color[2]);
+            primitive.capStartActor->SetVisibility(showPrimitiveShapes ? 1 : 0);
+        }
+        if (primitive.capEndActor) {
+            primitive.capEndActor->GetProperty()->SetColor(color[0], color[1], color[2]);
+            primitive.capEndActor->SetVisibility(showPrimitiveShapes ? 1 : 0);
         }
     }
 
@@ -741,6 +1008,79 @@ void MainWindow::updateCurrentPosture(const JointVector& joints)
         Robot3DVisualizer::postureLabel(config_.posture, "elbow", posture.value.elbow));
     ui->currentWristValueLabel->setText(
         Robot3DVisualizer::postureLabel(config_.posture, "wrist", posture.value.wrist));
+}
+
+void MainWindow::updateCollisionState(const JointVector& joints)
+{
+    collidingGeometryIds_.clear();
+    collidingLinkIds_.clear();
+    lastCollisionPairs_.clear();
+
+    if (!collisionProfileAvailable_) {
+        ui->collisionStatusLabel->setText(
+            QStringLiteral("Collision checking unavailable: %1")
+                .arg(collisionProfileNote_.isEmpty() ? QStringLiteral("no valid profile loaded")
+                                                     : collisionProfileNote_));
+        ui->collisionPairsTableWidget->setRowCount(0);
+        applyDebugVisualState();
+        return;
+    }
+
+    CollisionCheckRequest request;
+    request.joints = joints;
+    request.safetyMargin_m = units::mm(ui->collisionSafetyMarginSpinBox->value());
+    request.returnAllPairs = true;
+
+    const CollisionCheckResult result = CollisionChecker::check(config_, collisionProfile_, request);
+    populateCollisionPairs(result);
+
+    if (!result.ok()) {
+        ui->collisionStatusLabel->setText(
+            QStringLiteral("%1: %2")
+                .arg(Robot3DVisualizer::statusText(result.status), QString::fromStdString(result.message)));
+        applyDebugVisualState();
+        return;
+    }
+
+    lastCollisionPairs_ = result.pairs;
+    int collidingPairCount = 0;
+    for (const CollisionPairResult& pair : result.pairs) {
+        if (!pair.colliding) {
+            continue;
+        }
+
+        ++collidingPairCount;
+        collidingGeometryIds_.insert(pair.geometryA);
+        collidingGeometryIds_.insert(pair.geometryB);
+        collidingLinkIds_.insert(pair.linkA);
+        collidingLinkIds_.insert(pair.linkB);
+    }
+
+    const QString sourceSuffix = collisionProfileSource_.isEmpty()
+                                     ? QString()
+                                     : QStringLiteral(" [%1]").arg(collisionProfileSource_);
+    if (result.hasCollision) {
+        ui->collisionStatusLabel->setText(
+            QStringLiteral("Self-collision detected in %1 pair(s) with safety margin %2 mm.%3")
+                .arg(collidingPairCount)
+                .arg(formatNumber(ui->collisionSafetyMarginSpinBox->value(), 3))
+                .arg(sourceSuffix));
+        applyDebugVisualState();
+        return;
+    }
+
+    if (result.pairs.empty()) {
+        ui->collisionStatusLabel->setText(
+            QStringLiteral("No collision pairs were evaluated.%1").arg(sourceSuffix));
+        applyDebugVisualState();
+        return;
+    }
+
+    ui->collisionStatusLabel->setText(
+        QStringLiteral("No self-collision detected for the current joint state with safety margin %1 mm. Enable primitive shapes to inspect the runtime approximation.%2")
+            .arg(formatNumber(ui->collisionSafetyMarginSpinBox->value(), 3))
+            .arg(sourceSuffix));
+    applyDebugVisualState();
 }
 
 void MainWindow::updateIkStatus(const QString& message)
@@ -881,6 +1221,57 @@ void MainWindow::populateIkResults(const IKResult& result)
     }
 
     updateActionState();
+}
+
+void MainWindow::populateCollisionPairs(const CollisionCheckResult& result)
+{
+    if (!result.ok()) {
+        ui->collisionPairsTableWidget->setRowCount(0);
+        return;
+    }
+
+    std::vector<CollisionPairResult> displayPairs = result.pairs;
+    std::stable_sort(displayPairs.begin(), displayPairs.end(),
+                     [](const CollisionPairResult& a, const CollisionPairResult& b) {
+                         if (a.colliding != b.colliding) {
+                             return a.colliding && !b.colliding;
+                         }
+                         return a.distance_m < b.distance_m;
+                     });
+
+    ui->collisionPairsTableWidget->setRowCount(static_cast<int>(displayPairs.size()));
+
+    for (int row = 0; row < static_cast<int>(displayPairs.size()); ++row) {
+        const CollisionPairResult& pair = displayPairs[static_cast<std::size_t>(row)];
+        const QString stateText = pair.colliding ? QStringLiteral("Colliding") : QStringLiteral("Clear");
+        auto* stateItem = new QTableWidgetItem(stateText);
+        auto* geometryAItem = new QTableWidgetItem(QString::fromStdString(pair.geometryA));
+        auto* geometryBItem = new QTableWidgetItem(QString::fromStdString(pair.geometryB));
+        auto* linkAItem = new QTableWidgetItem(QString::fromStdString(pair.linkA));
+        auto* linkBItem = new QTableWidgetItem(QString::fromStdString(pair.linkB));
+        auto* clearanceItem = new QTableWidgetItem(formatNumber(units::toMm(pair.distance_m), 3));
+
+        ui->collisionPairsTableWidget->setItem(row, 0, stateItem);
+        ui->collisionPairsTableWidget->setItem(row, 1, geometryAItem);
+        ui->collisionPairsTableWidget->setItem(row, 2, geometryBItem);
+        ui->collisionPairsTableWidget->setItem(row, 3, linkAItem);
+        ui->collisionPairsTableWidget->setItem(row, 4, linkBItem);
+        ui->collisionPairsTableWidget->setItem(row, 5, clearanceItem);
+
+        if (pair.colliding) {
+            const QColor highlight(255, 234, 228);
+            stateItem->setBackground(highlight);
+            geometryAItem->setBackground(highlight);
+            geometryBItem->setBackground(highlight);
+            linkAItem->setBackground(highlight);
+            linkBItem->setBackground(highlight);
+            clearanceItem->setBackground(highlight);
+        }
+    }
+
+    if (!displayPairs.empty()) {
+        ui->collisionPairsTableWidget->selectRow(0);
+    }
 }
 
 void MainWindow::applySelectedIkSolution()
@@ -1037,4 +1428,62 @@ Result<std::optional<ArmPosture>> MainWindow::requestedPosture() const
         return Result<std::optional<ArmPosture>>::failure(posture.status, posture.message);
     }
     return Result<std::optional<ArmPosture>>::success(posture.value);
+}
+
+void MainWindow::loadCollisionProfile()
+{
+    collisionProfileAvailable_ = false;
+    collisionProfileSource_.clear();
+    collisionProfileNote_.clear();
+
+    Result<CollisionProfile> loadedProfile =
+        Result<CollisionProfile>::failure(KinematicsStatus::InvalidRequest, "no collision profile attempted");
+
+    const auto metadataIt = config_.metadata.find("collisionProfile");
+    if (metadataIt != config_.metadata.end()) {
+        const QString relativePath = QString::fromStdString(metadataIt->second);
+        const QString resolvedPath = findRepoRelativePath(relativePath);
+        if (!resolvedPath.isEmpty()) {
+            loadedProfile = CollisionProfileJsonLoader::loadFile(resolvedPath.toStdString());
+            if (loadedProfile.ok()) {
+                collisionProfileSource_ = QStringLiteral("External JSON: %1")
+                                              .arg(QDir::toNativeSeparators(resolvedPath));
+            } else {
+                collisionProfileNote_ =
+                    QStringLiteral("Failed to load %1 (%2). Falling back to the built-in conservative profile.")
+                        .arg(QDir::toNativeSeparators(resolvedPath),
+                             QString::fromStdString(loadedProfile.message));
+            }
+        } else {
+            collisionProfileNote_ =
+                QStringLiteral("Preset metadata references `%1`, but the file was not found. Falling back to the built-in conservative profile.")
+                    .arg(relativePath);
+        }
+    }
+
+    if (!loadedProfile.ok()) {
+        loadedProfile = Result<CollisionProfile>::success(CollisionProfiles::nachiMZ04D());
+        if (collisionProfileSource_.isEmpty()) {
+            collisionProfileSource_ = QStringLiteral("Built-in conservative Nachi profile");
+        }
+    }
+
+    const CollisionProfileValidationResult validation =
+        CollisionProfileValidator::validate(config_, loadedProfile.value);
+    if (!validation.ok()) {
+        collisionProfileAvailable_ = false;
+        collisionProfileSource_ = QStringLiteral("Unavailable");
+        collisionProfileNote_ =
+            QStringLiteral("Collision profile validation failed: %1").arg(QString::fromStdString(validation.issues.front().message));
+        return;
+    }
+
+    collisionProfile_ = loadedProfile.value;
+    collisionProfileAvailable_ = true;
+    if (collisionProfileNote_.isEmpty()) {
+        collisionProfileNote_ =
+            QStringLiteral("Conservative primitive profile only; useful for debugging and authoring, not safety-rated.");
+    } else {
+        collisionProfileNote_ += QStringLiteral(" Conservative primitive profile only; not safety-rated.");
+    }
 }

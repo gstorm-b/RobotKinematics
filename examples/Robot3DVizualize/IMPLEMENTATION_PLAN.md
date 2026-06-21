@@ -20,7 +20,10 @@ This example is a consumer of the RobotKinematics API. It must not make VTK a de
 - No VTK vendoring in this repository.
 - No change to the core `RobotKinematics.pro` build.
 - No controller/network connection.
-- No path planning, collision checking, dynamics, or trajectory generation.
+- No path planning, dynamics, or trajectory generation.
+- No collision checking until the core primitive collision API from
+  `docs/collision_detection_plan.md` exists. After that lands, this example may visualize core
+  collision results, but must not use VTK/STL mesh intersections as collision truth.
 - No physical robot accuracy claim.
 - No support for presets other than Nachi MZ04D in the first example.
 

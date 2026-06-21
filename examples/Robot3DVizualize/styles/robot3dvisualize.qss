@@ -41,8 +41,18 @@ QLabel#contextHintLabel,
 QLabel#jointLimitHintLabel,
 QLabel#postureHintLabel,
 QLabel#jointStatusLabel,
-QLabel#ikStatusLabel {
+QLabel#ikStatusLabel,
+QLabel#collisionProfileNoteLabel {
     color: #445b66;
+}
+
+QLabel#collisionStatusLabel,
+QLabel#collisionProfileValueLabel {
+    color: #22343e;
+    background: #edf3f6;
+    border: 1px solid #cfd8df;
+    border-radius: 6px;
+    padding: 6px 8px;
 }
 
 QLabel#sceneTitleLabel {

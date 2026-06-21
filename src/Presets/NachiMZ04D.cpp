@@ -98,6 +98,7 @@ SerialRobotConfig nachiMZ04D()
         "docs/preset_references/nachi-mz04d.md",
         {"dimensions", "joint_limits"},
     });
+    config.metadata["collisionProfile"] = "collision_profiles/nachi_mz04d_collision.json";
     config.metadata["kinematics_source"] = "reverse_engineered_from_teach_pendant_poses";
     config.metadata["joint_limits_status"] = "from_teach_pendant";
     config.metadata["posture_status"] = "from_nachi_manual";

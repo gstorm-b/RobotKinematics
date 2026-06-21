@@ -86,7 +86,7 @@ Phase 1 supports:
 
 ### links
 
-Links are stable IDs. They may be extended later with visual or collision metadata, but phase 1 only requires IDs.
+Links are stable IDs. They may be referenced by visual or collision metadata, but phase 1 only requires IDs.
 
 ```json
 [
@@ -211,3 +211,83 @@ The loader stores source references in the canonical `SerialRobotConfig` so gene
 Free-form object for non-solver metadata.
 
 Unknown top-level fields are invalid. Put extension data inside `metadata`.
+
+### collision profile references
+
+Collision geometry is not a required top-level field in `robot-kinematics-preset/v1`.
+
+Primitive collision profiles use a separate artifact with schema id
+`robot-kinematics-collision/v1`. A preset may reference a collision profile from `metadata`:
+
+```json
+{
+  "metadata": {
+    "collisionProfile": "collision_profiles/nachi_mz04d_collision.json"
+  }
+}
+```
+
+The preset loader is not required to load this profile automatically. Runtime code should load the
+collision profile explicitly so kinematics presets remain usable without collision data.
+
+## Collision Profile Schema Direction
+
+Collision profile files use SI units only:
+
+- length: meter
+- angle: radian
+
+MVP runtime shapes are `sphere` and `capsule`. STL triangle meshes are not runtime collision
+geometry.
+
+Minimum shape:
+
+```json
+{
+  "schema": "robot-kinematics-collision/v1",
+  "profile": {
+    "id": "virtual_6dof_test_arm_conservative_primitives",
+    "robotModel": "Virtual6DofTestArm",
+    "units": { "length": "m", "angle": "rad" }
+  },
+  "geometries": [
+    {
+      "id": "link_2_capsule",
+      "link": "link_2",
+      "shape": "capsule",
+      "geometryToLink": {
+        "xyz_m": [0.0, 0.0, 0.0],
+        "rpy_rad": [0.0, 0.0, 0.0]
+      },
+      "capsule": {
+        "radius_m": 0.04,
+        "length_m": 0.3
+      },
+      "margin_m": 0.005,
+      "enabled": true
+    }
+  ],
+  "disabledPairs": [
+    {
+      "a": "base_body",
+      "b": "link_1_body",
+      "reason": "adjacent_joint_contact"
+    }
+  ],
+  "sources": [],
+  "metadata": {}
+}
+```
+
+For a sphere, use:
+
+```json
+{
+  "shape": "sphere",
+  "sphere": {
+    "radius_m": 0.05
+  }
+}
+```
+
+Collision profile loaders must reject unknown top-level fields unless they are under `metadata`.

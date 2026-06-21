@@ -78,6 +78,7 @@ SerialRobotConfig virtual6DofTestArm()
         "docs/robot_kinematics_spec.md",
         {"dimensions", "joint_limits", "posture"},
     });
+    config.metadata["collisionProfile"] = "collision_profiles/virtual_6dof_test_arm_collision.json";
     config.metadata["purpose"] = "base_milestone_fixture";
     return config;
 }

@@ -32,12 +32,18 @@ SOURCES += \
     unit/ForwardKinematicsTests.cpp \
     unit/Robot3DVisualizerLogicTests.cpp \
     unit/IKApiTests.cpp \
+    unit/CollisionApiTests.cpp \
+    unit/CollisionProfileValidatorTests.cpp \
+    unit/CollisionCheckerTests.cpp \
+    unit/CollisionPrimitiveDistanceTests.cpp \
+    unit/StlPrimitiveAuthoringHelperTests.cpp \
     unit/IKSolutionRankerTests.cpp \
     unit/NumericalIKSolverTests.cpp \
     unit/PostureResolverTests.cpp \
     unit/AnalyticIKSolverTests.cpp \
     unit/UrdfAdapterTests.cpp \
     integration/CustomPresetTests.cpp \
+    integration/CollisionProfileJsonTests.cpp \
     integration/FrameToolFkTests.cpp \
     integration/IKIntegrationTests.cpp \
     integration/Virtual6DofTestArmTests.cpp \
@@ -55,12 +61,18 @@ HEADERS += \
     unit/ForwardKinematicsTests.h \
     unit/Robot3DVisualizerLogicTests.h \
     unit/IKApiTests.h \
+    unit/CollisionApiTests.h \
+    unit/CollisionProfileValidatorTests.h \
+    unit/CollisionCheckerTests.h \
+    unit/CollisionPrimitiveDistanceTests.h \
+    unit/StlPrimitiveAuthoringHelperTests.h \
     unit/IKSolutionRankerTests.h \
     unit/NumericalIKSolverTests.h \
     unit/PostureResolverTests.h \
     unit/AnalyticIKSolverTests.h \
     unit/UrdfAdapterTests.h \
     integration/CustomPresetTests.h \
+    integration/CollisionProfileJsonTests.h \
     integration/FrameToolFkTests.h \
     integration/IKIntegrationTests.h \
     integration/Virtual6DofTestArmTests.h \

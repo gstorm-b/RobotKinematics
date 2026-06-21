@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+#include <RobotKinematics/Collision/CollisionChecker.h>
+#include <RobotKinematics/Collision/CollisionProfile.h>
 #include <RobotKinematics/Kinematics/ForwardKinematics.h>
 #include <RobotKinematics/Kinematics/SerialRobotKinematics.h>
 #include <RobotKinematics/Model/FrameRegistry.h>
@@ -13,6 +15,7 @@
 
 #include <array>
 #include <memory>
+#include <set>
 #include <vector>
 
 class QVTKOpenGLNativeWidget;
@@ -45,6 +48,7 @@ private:
         std::string linkId;
         RobotKinematics::Pose homeLinkInBase = RobotKinematics::Pose::identity();
         RobotKinematics::Pose homeVisualCorrection = RobotKinematics::Pose::identity();
+        std::array<double, 3> baseColorRgb = {0.75, 0.75, 0.75};
         int jointAxisIndex = -1;
         bool isLoaded = false;
         vtkSmartPointer<vtkActor> actor;
@@ -53,27 +57,46 @@ private:
         vtkSmartPointer<vtkActor> axisActor;
     };
 
+    struct PrimitiveDebugState {
+        std::string geometryId;
+        std::string linkId;
+        RobotKinematics::CollisionShapeType shapeType = RobotKinematics::CollisionShapeType::Sphere;
+        RobotKinematics::Pose geometryToLink = RobotKinematics::Pose::identity();
+        double radius_m = 0.0;
+        double length_m = 0.0;
+        std::array<double, 3> baseColorRgb = {0.45, 0.85, 0.65};
+        vtkSmartPointer<vtkActor> bodyActor;
+        vtkSmartPointer<vtkActor> capStartActor;
+        vtkSmartPointer<vtkActor> capEndActor;
+    };
+
     void setupVtkViewport();
     void setupModelState();
     void setupUiState();
     void connectSignals();
     void loadRobotVisuals();
+    void loadCollisionProfile();
+    void loadCollisionDebugVisuals();
     void applyJointStateToSceneAndReadouts();
     void updateSceneFromChain(const RobotKinematics::FkChain& chain);
+    void updateCollisionDebugVisuals(const RobotKinematics::FkChain& chain);
     void updatePoseReadouts(const RobotKinematics::FkChain& chain);
     void updateJointStatus(const RobotKinematics::JointVector& joints);
     void updateCurrentPosture(const RobotKinematics::JointVector& joints);
+    void updateCollisionState(const RobotKinematics::JointVector& joints);
     void updateIkStatus(const QString& message);
     void updateActionState();
     void populateCombos();
     void populateJointControls();
     void populatePostureControls();
     void populateSampleButtons();
+    void populateCollisionControls();
     void populateDebugControls();
     void applyDebugVisualState();
     void resetTargetToCurrentTcp();
     void solveInverseKinematics(bool solveAll);
     void populateIkResults(const RobotKinematics::IKResult& result);
+    void populateCollisionPairs(const RobotKinematics::CollisionCheckResult& result);
     void applySelectedIkSolution();
     void setJointDegrees(const std::array<double, 6>& degrees);
     RobotKinematics::JointVector currentJointVector() const;
@@ -97,8 +120,16 @@ private:
     RobotKinematics::FrameRegistry frameRegistry_;
     RobotKinematics::ToolRegistry toolRegistry_;
     std::unique_ptr<RobotKinematics::PostureResolver> postureResolver_;
+    RobotKinematics::CollisionProfile collisionProfile_;
+    bool collisionProfileAvailable_ = false;
     std::vector<VisualPartState> visualParts_;
+    std::vector<PrimitiveDebugState> primitiveDebugStates_;
     std::vector<RobotKinematics::IKSolution> lastIkSolutions_;
+    std::vector<RobotKinematics::CollisionPairResult> lastCollisionPairs_;
+    std::set<std::string> collidingGeometryIds_;
+    std::set<std::string> collidingLinkIds_;
     QString assetsDirectory_;
+    QString collisionProfileSource_;
+    QString collisionProfileNote_;
 };
 #endif // MAINWINDOW_H

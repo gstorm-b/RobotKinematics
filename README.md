@@ -2,11 +2,13 @@
 
 RobotKinematics is a planned C++/Eigen backend library for industrial robot kinematics.
 
-The library will support forward kinematics, inverse kinematics, joint-limit validation, user frames, tool frames, custom robot presets, and reusable solver interfaces. It has no UI.
+The library will support forward kinematics, inverse kinematics, joint-limit validation, user frames, tool frames, custom robot presets, reusable solver interfaces, and a planned primitive self-collision extension. It has no UI.
 
 ## Current Status
 
 The base serial 6DOF library milestone is implemented. The codebase includes the Qt/qmake static library, Qt Test runner, core units and `Pose`, canonical serial robot model, model validation, joint-limit validation, frame/tool registries, FK, numerical IK, posture-aware solution selection, JSON preset loading, `Virtual6DofTestArm`, standard DH import, URDF-like import/export, and a hybrid analytic IK plugin for supported spherical-wrist 6R robots.
+
+Primitive self-collision detection is the next approved extension. Runtime checks will use lightweight primitive profiles, not STL triangle meshes. See [docs/collision_detection_plan.md](docs/collision_detection_plan.md).
 
 Real preset status:
 
@@ -20,8 +22,9 @@ Read these files in order:
 1. [Project Spec](docs/robot_kinematics_spec.md)
 2. [Implementation Plan](docs/robot_kinematics_implementation_plan.md)
 3. [Preset JSON Schema](docs/robot_preset_json_schema.md)
-4. [Developer Onboarding](docs/developer_onboarding.md)
-5. [Agent Instructions](AGENTS.md), if you are an AI/code agent working on this repo
+4. [Collision Detection Plan](docs/collision_detection_plan.md), if you are working on the collision module
+5. [Developer Onboarding](docs/developer_onboarding.md)
+6. [Agent Instructions](AGENTS.md), if you are an AI/code agent working on this repo
 
 If you want to **use RobotKinematics as a library** (rather than work on it), see the
 [Developer Guide](docs/developer-guide/README.md) — building/linking, usage examples, an API
@@ -41,6 +44,7 @@ reference, conventions/gotchas, and architecture decision records.
 - Preset format: JSON schema `robot-kinematics-preset/v1`.
 - First preset: `Virtual6DofTestArm`.
 - First numerical IK method: adaptive damped least squares.
+- Collision detection direction: primitive self-collision profiles, with STL only as an optional authoring-helper input.
 
 ## First Milestone
 
@@ -86,7 +90,7 @@ scripts\test_mingw.bat
 
 - No UI.
 - No physical robot accuracy claim.
-- No collision checking.
+- No collision checking in the first milestone. Primitive self-collision is planned as a later extension.
 - No path planning.
 - No SCARA, delta, parallel, 4DOF, or 5DOF implementation.
 - No exhaustive guarantee for numerical `solveAll`.

@@ -893,10 +893,148 @@
                  <height>40</height>
                 </size>
                </property>
-              </spacer>
-             </item>
-            </layout>
-           </widget>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="collisionTab">
+           <attribute name="title">
+            <string>Collision</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="collisionTabLayout">
+            <property name="spacing">
+             <number>12</number>
+            </property>
+            <item>
+             <widget class="QGroupBox" name="collisionProfileGroupBox">
+              <property name="title">
+               <string>Primitive Collision Profile</string>
+              </property>
+              <layout class="QFormLayout" name="collisionProfileFormLayout">
+               <item row="0" column="0">
+                <widget class="QLabel" name="collisionProfileLabel">
+                 <property name="text">
+                  <string>Profile source</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QLabel" name="collisionProfileValueLabel">
+                 <property name="text">
+                  <string>Unavailable</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="collisionSafetyMarginLabel">
+                 <property name="text">
+                  <string>Safety margin</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QDoubleSpinBox" name="collisionSafetyMarginSpinBox">
+                 <property name="decimals">
+                  <number>3</number>
+                 </property>
+                 <property name="minimum">
+                  <double>0.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>250.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>1.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="showPrimitiveShapesCheckBox">
+              <property name="text">
+               <string>Show primitive collision shapes in scene</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="collisionProfileNoteLabel">
+              <property name="text">
+               <string>Collision truth comes from conservative primitives, not STL meshes.</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="collisionStatusLabel">
+              <property name="text">
+               <string>Collision status will appear here.</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTableWidget" name="collisionPairsTableWidget">
+              <property name="editTriggers">
+               <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+              </property>
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+              </property>
+              <property name="selectionBehavior">
+               <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+              </property>
+              <property name="columnCount">
+               <number>6</number>
+              </property>
+              <attribute name="horizontalHeaderStretchLastSection">
+               <bool>true</bool>
+              </attribute>
+              <column>
+               <property name="text">
+                <string>State</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Geometry A</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Geometry B</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Link A</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Link B</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Clearance (mm)</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+           </layout>
+          </widget>
            <widget class="QWidget" name="debugTab">
             <attribute name="title">
              <string>Debug</string>

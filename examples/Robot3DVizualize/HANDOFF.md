@@ -2,16 +2,19 @@
 
 ## Status
 
-Phase 6 is complete.
+Phase 6 plus primitive collision visualization follow-up work are complete.
 
 Verified:
 
 - `scripts\build_example_robot3dvisualize_msvc.bat` builds the example with VTK `9.6`.
 - `scripts\test_msvc.bat` passes, so the core build/test path remains independent from VTK.
 - The example starts without an immediate runtime crash when Qt and VTK DLL paths are on `PATH`.
+- The example still starts without an immediate runtime crash after adding the collision tab and scene highlighting.
 - The VTK scene renders the eight STL runtime assets and updates actor transforms from FK as joints change.
 - FK joint controls, readouts, IK solving, posture controls, and apply-selected-solution flow are wired through the live UI.
 - The Debug tab can isolate per-mesh visibility, per-mesh origins, and per-joint FK axes for CAD/export debugging.
+- The new Collision tab loads the primitive Nachi collision profile, supports an optional safety margin in millimeters, reports current pair diagnostics, and highlights colliding links in the VTK scene using core pair-level results.
+- This handoff verified build + startup smoke for the new collision UI. A desktop operator should still do one in-app safe-state pass and one colliding-state pass before treating the example QA as fully closed.
 - Missing or unreadable STL assets surface a visible warning dialog plus a status-bar message.
 - The README now documents build/run/runtime setup plus a manual QA checklist.
 
@@ -61,6 +64,10 @@ D:\Project\vtk_build\vtk\install-x64-cuda-qt-vs
 - The rendered `Centering_tool.stl` mesh is always the visual CAD asset on the flange. Active TCP selection changes FK/IK math and readouts, but does not swap the visible mesh.
 - The core Nachi preset reference doc still contains the older measured fixture offset `(44.2, 0, 139.0) mm` for non-example FK checks. Do not reuse that value for `Centering_tool.stl`; this example uses `(45, 0, 112) mm`.
 - The example still relies on example-local CAD alignment corrections rather than a formal per-link calibration dataset.
+- Collision visualization is not part of the current example implementation. Add it only after the
+  core primitive collision API exists, and use primitive collision results rather than VTK/STL mesh
+  intersections as collision truth.
+  This is now implemented for the Nachi example using conservative primitive profiles.
 
 ## Verification Commands
 

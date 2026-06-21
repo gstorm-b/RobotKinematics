@@ -141,6 +141,7 @@
     }
   ],
   "metadata": {
+    "collisionProfile": "collision_profiles/nachi_mz04d_collision.json",
     "kinematics_source": "reverse_engineered_from_teach_pendant_poses",
     "joint_limits_status": "from_teach_pendant",
     "posture_status": "from_nachi_manual"

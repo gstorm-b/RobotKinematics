@@ -14,7 +14,9 @@ Phase 6 is complete:
 - `Centering_tool.stl` now uses the validated example-local flange/TCP offset `(45, 0, 112, 0, 0, 0)` plus a static CAD-frame correction before the FK delta is applied.
 - orientation axes, a simple wireframe ground plane, lighting, and per-part materials are enabled.
 - persistent FK, IK, and posture controls now live in `mainwindow.ui`.
+- persistent collision status, primitive-profile source info, safety-margin control, and pair diagnostics now live in `mainwindow.ui`.
 - a Debug tab now lets developers show/hide each mesh, each mesh origin, and each FK joint axis for visual alignment work.
+- links involved in primitive self-collision are highlighted directly in the VTK scene using core pair-level collision results.
 - flange/TCP readouts, `solve`, `solveAll`, posture preference/requirement controls, and apply-selected-solution flow are implemented.
 - missing or unreadable STL assets are reported to the user through the status bar and a warning dialog.
 - a startup smoke check passes when Qt and VTK DLL paths are on `PATH`.
@@ -123,6 +125,7 @@ FK / IK / Posture / Debug tabs:
 - `FK` drives live joint motion and shows flange/TCP pendant-format readouts.
 - `IK` supports `Copy Current TCP`, `Solve Best`, `Solve All`, and apply-selected-solution.
 - `Posture` lets IK prefer or require Nachi shoulder/elbow/wrist branches.
+- `Collision` shows the active primitive profile source, applies an optional safety margin in millimeters, reports the closest/current colliding pairs, and highlights colliding links in the scene.
 - `Debug` is for CAD/frame inspection: per-object mesh visibility, per-object mesh origin markers, and per-joint FK axis display.
 
 ## Current Visual Assumptions
@@ -158,3 +161,6 @@ Before handing off the example on a new machine or after mesh/correction changes
 - This example is not a calibration claim for the real robot.
 - VTK remains example-only and must not leak into the core library build.
 - STEP files are preserved as source CAD references, not runtime assets.
+- Collision visualization now consumes the core primitive collision API and highlights colliding
+  links from primitive pair results only. It does not use VTK/STL mesh intersections as collision
+  truth.

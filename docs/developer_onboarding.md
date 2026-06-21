@@ -9,7 +9,7 @@ It will let developer engineers:
 - define or load a robot model;
 - compute forward kinematics;
 - solve inverse kinematics;
-- validate joint limits;
+- validate joint limits and planned primitive self-collision profiles;
 - configure base/user/tool frames;
 - load custom robot presets;
 - choose IK solutions using seed, previous joint state, posture, and options.
@@ -56,6 +56,7 @@ Current implementation status:
 - Phase 6 real presets: Nachi MZ04D is implemented from teach-pendant data; Kawasaki RS007N remains blocked until verified source data is provided.
 - Phase 7 exists for standard DH import to canonical config and URDF-like export/import. Modified DH remains a later adapter extension.
 - Phase 8 analytic IK capability detection and spherical-wrist analytic IK are implemented for supported morphologies.
+- Phase 9 primitive self-collision detection is approved and planned, but not implemented yet.
 
 ## Key Architecture Decisions
 
@@ -114,6 +115,17 @@ The first preset is `Virtual6DofTestArm`. It exists to validate library behavior
 
 Nachi MZ04D is available as a real preset. Kawasaki RS007N should be added only after source dimensions, joint limits, and posture rules are provided.
 
+### Collision
+
+The planned collision module is primitive-first and runtime-lightweight.
+
+- Runtime collision checks use sphere/capsule profiles.
+- STL files are not runtime collision geometry.
+- STL may be used by helper tooling to propose draft primitives for manual review.
+- Collision profiles use a separate schema, `robot-kinematics-collision/v1`.
+- Collision found at a valid joint state is represented by `hasCollision`, not a failure status.
+- No physical safety or calibration accuracy claim is made.
+
 ## Planned Source Layout
 
 ```text
@@ -132,6 +144,7 @@ src/
   Model/
   Kinematics/
   Solvers/
+  Collision/
   Posture/
   Presets/
   Adapters/
@@ -187,6 +200,7 @@ Good initial task order:
 10. Implement numerical IK.
 11. Implement posture/ranking.
 12. Implement JSON loader and `Virtual6DofTestArm`.
+13. Implement primitive collision detection using `docs/collision_detection_plan.md`.
 
 ## Definition Of Done
 
@@ -215,3 +229,5 @@ Canonical serial configs may contain fixed joints for adapter-generated link tra
 - Do not implement Kawasaki RS007N without source references.
 - Do not put robot-specific preset data inside generic solver code.
 - Do not expand to SCARA, delta, parallel, or analytic IK before the base milestone.
+- Do not use STL meshes or VTK for runtime core collision checking.
+- Do not treat primitive collision profiles as safety-rated physical geometry.
