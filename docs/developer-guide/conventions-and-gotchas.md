@@ -109,6 +109,7 @@ teach-pendant data rounded to 2 decimal places, the joint comparison may relax t
 
 ## Not in scope
 
-No UI, path planning, dynamics, or trajectory generation. Primitive self-collision detection is
-planned as a lightweight extension and must use primitive profiles, not runtime STL meshes. Only
-serial 6DOF is implemented (no SCARA/delta/parallel). Modified (Craig) DH is not implemented.
+No UI, path planning, dynamics, or trajectory generation. Primitive self-collision is available as a
+lightweight approximate/debug path; accurate STL-backed mesh collision is planned as an optional
+backend. Only serial 6DOF is implemented (no SCARA/delta/parallel). Modified (Craig) DH is not
+implemented.

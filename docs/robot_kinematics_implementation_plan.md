@@ -2,7 +2,7 @@
 
 ## Overview
 
-Implement RobotKinematics as a reusable C++/Eigen backend library. The first deliverable is a serial 6DOF kinematics core with canonical robot config, FK, numerical IK, frame/tool support, posture-aware solution selection, custom presets, and one virtual implementation preset. After the base milestone, the next approved extension is primitive self-collision detection.
+Implement RobotKinematics as a reusable C++/Eigen backend library. The first deliverable is a serial 6DOF kinematics core with canonical robot config, FK, numerical IK, frame/tool support, posture-aware solution selection, custom presets, and one virtual implementation preset. After the base milestone, primitive self-collision detection was added as a fast approximate/debug path. The next approved extension is an accurate mesh collision backend.
 
 The plan intentionally builds the foundation first, then solver behavior, then a project-owned virtual preset, then real vendor presets after source data is provided. SCARA, delta, parallel, and analytic IK are designed for but not implemented in phase 1 unless separately approved.
 
@@ -46,6 +46,9 @@ Analytic IK plugin
     |
     v
 Primitive collision detection
+    |
+    v
+Mesh collision backend
 ```
 
 ## Architecture Decisions
@@ -64,7 +67,8 @@ Primitive collision detection
 - Presets are JSON files. Virtual6DofTestArm is the first required preset and has a built-in C++ fallback. Kawasaki RS007N and Nachi MZ04D are integrated after source data is provided.
 - Preset JSON schema is `robot-kinematics-preset/v1` and stores solver-facing values in SI units only.
 - IK/validation status uses `KinematicsStatus`.
-- Collision detection is primitive-first: runtime checks use sphere/capsule profiles, not STL triangle meshes. STL may be used only by helper tooling that proposes primitives for manual review.
+- Primitive collision remains available as a fast fallback/debug mode.
+- Accurate mesh collision should keep RobotKinematics public APIs backend-neutral and use a specialized backend library behind an internal adapter, with Coal/FCL preferred and VTK limited to example/debug use unless explicitly approved.
 
 ## Phase 0: Project Foundation
 
@@ -746,6 +750,224 @@ to machine precision). Other morphologies report unsupported and fall back to th
 
 **Estimated scope:** Medium.
 
+## Phase 10: Mesh Collision Backend
+
+See `docs/mesh_collision_backend_plan.md` for the detailed source-of-truth plan and handoff notes.
+
+Current status:
+
+- Task 10.1 is complete for Coal in this workspace: VTK debug spike and dependency report exist,
+  local install roots are available, and a RobotKinematics-side synthetic Coal runtime query is
+  passing.
+- Tasks 10.2, 10.3, and 10.4 are implemented and verified in the default build.
+- Task 10.5 is partially implemented through an optional Coal adapter with synthetic backend-enabled
+  tests, verified default no-backend behavior, and a synthetic benchmark tool/result; Nachi-profile
+  runtime measurement remains open.
+- Review hardening before Task 10.6 is complete: mesh profile `loadFile(path)` resolves relative STL
+  paths from the profile directory, mesh numeric JSON fields are strict, Coal safety-margin behavior
+  is covered by test, and local optional dependency checkouts/install roots are ignored by git.
+
+### Task 10.1: Run Mesh Backend Dependency Spike
+
+**Description:** Prove which mesh collision backend can be built, linked, and queried with MSVC/qmake before production integration.
+
+**Acceptance criteria:**
+- [x] Coal spike attempts a minimal two-mesh collision query.
+- [ ] FCL spike attempts the same if Coal is not immediately viable.
+- [x] VTK spike is recorded only as an example/debug baseline.
+- [x] A dependency report documents install path, qmake integration, libraries, DLL/runtime needs, license notes, distance/contact support, and blockers.
+- [x] No production API depends on the spike.
+
+**Verification:**
+- [x] Run the documented spike command.
+- [x] Confirm one colliding and one separated triangle-mesh query.
+
+**Dependencies:** Phase 9.
+
+**Files likely touched:**
+- `docs/mesh_collision_backend_spike.md`
+- optional temporary spike under `examples/` or `tools/mesh_collision_spike/`
+
+**Estimated scope:** Medium.
+
+### Task 10.2: Add Backend-Neutral Collision Abstraction
+
+**Description:** Add RobotKinematics-owned backend interfaces so primitive and mesh collision can be selected without exposing third-party types.
+
+**Acceptance criteria:**
+- [x] Primitive checker is available through the abstraction.
+- [x] Mesh backend availability can be queried.
+- [x] Mesh requests return structured unsupported results when no mesh backend is compiled.
+- [x] Public headers contain only RobotKinematics-owned types.
+
+**Verification:**
+- [x] Unit tests cover primitive backend through abstraction.
+- [x] Unit tests cover unavailable mesh backend behavior.
+
+**Dependencies:** Task 10.1.
+
+**Files likely touched:**
+- `include/RobotKinematics/Collision/...`
+- `src/Collision/...`
+- `tests/unit/CollisionBackendTests.*`
+
+**Estimated scope:** Medium.
+
+### Task 10.3: Add Mesh Profile Types And JSON Loader
+
+**Description:** Add standalone `robot-kinematics-collision-mesh/v1` profile support.
+
+**Acceptance criteria:**
+- [x] Mesh profiles require mesh id, link id, path, format, source units, scale to meters, `meshToLink`, margin, and disabled pair metadata.
+- [x] Unknown top-level fields are rejected unless under `metadata`.
+- [x] Duplicate mesh ids and invalid disabled pair references are rejected.
+- [x] Loader does not require a mesh backend to be compiled.
+
+**Verification:**
+- [x] Tests cover valid profile, missing scale, invalid link, duplicate mesh id, invalid pair, and metadata preservation.
+- [x] Tests cover strict numeric validation and relative mesh path resolution from profile files.
+
+**Dependencies:** Task 10.2.
+
+**Files likely touched:**
+- `include/RobotKinematics/Collision/MeshCollisionProfile.h`
+- `include/RobotKinematics/Collision/MeshCollisionProfileJsonLoader.h`
+- `src/Collision/MeshCollisionProfileJsonLoader.cpp`
+- `tests/integration/MeshCollisionProfileJsonTests.*`
+
+**Estimated scope:** Medium.
+
+### Task 10.4: Add STL Mesh Loader With Unit Normalization
+
+**Description:** Load STL mesh vertices and triangle indices into RobotKinematics-owned meter-based data.
+
+**Acceptance criteria:**
+- [x] ASCII and binary STL are supported, or unsupported payloads fail clearly.
+- [x] `scaleToMeters` is applied explicitly.
+- [x] Degenerate triangles and non-finite vertices are rejected or diagnosed.
+- [x] Mesh statistics include triangle count and bounds.
+- [x] Loader does not depend on VTK.
+
+**Verification:**
+- [x] Tests cover tiny ASCII and binary STL fixtures.
+- [x] Tests prove millimeter STL input becomes meter-valued mesh data.
+
+**Dependencies:** Task 10.3.
+
+**Files likely touched:**
+- `include/RobotKinematics/Collision/TriangleMesh.h`
+- `include/RobotKinematics/Collision/StlMeshLoader.h`
+- `src/Collision/StlMeshLoader.cpp`
+- `tests/unit/StlMeshLoaderTests.*`
+
+**Estimated scope:** Medium.
+
+### Task 10.5: Implement Selected Mesh Backend Adapter
+
+**Description:** Implement the selected Coal or FCL adapter behind compile flags.
+
+**Acceptance criteria:**
+- [x] Mesh/BVH objects are built once per mesh asset and reused.
+- [x] FK updates only object transforms per check.
+- [x] Disabled pair filtering matches primitive behavior.
+- [x] Results include pair ids, link ids, collision bool, and distance/contact data when supported.
+- [x] Default no-backend build remains usable.
+
+**Verification:**
+- [x] Backend-enabled tests run on synthetic triangle meshes.
+- [x] Backend-disabled tests still pass.
+- [x] Backend-enabled tests cover request-level safety-margin collision behavior.
+- [ ] Basic runtime measurement is recorded for synthetic and Nachi mesh fixtures.
+  Synthetic timing is now recorded through `tools/mesh_collision_benchmark`; Nachi timing remains
+  open until the real mesh profile exists.
+
+**Dependencies:** Tasks 10.1, 10.3, and 10.4.
+
+**Files likely touched:**
+- `src/Collision/CoalMeshCollisionBackend.cpp` or `src/Collision/FclMeshCollisionBackend.cpp`
+- backend qmake `.pri`
+- `tests/unit/MeshCollisionBackendTests.*`
+
+**Estimated scope:** Large. Split before implementation.
+
+### Task 10.6: Add Nachi STL Mesh Collision Profile
+
+**Description:** Add an STL-backed collision mesh profile for Nachi MZ04D using explicit mesh-to-link transforms.
+
+**Acceptance criteria:**
+- [ ] Relevant Nachi STL parts are represented as mesh assets.
+- [ ] Each mesh declares source units, scale, `meshToLink`, and source reference.
+- [ ] Adjacent or allowed-contact pairs are disabled with reasons.
+- [ ] Known primitive false negatives are captured as regression tests when joint poses are available.
+- [ ] Mesh profile is clearly not a physical safety certification.
+
+**Verification:**
+- [ ] Mesh profile validation passes.
+- [ ] Manual visual QA confirms mesh transforms match rendered STL parts.
+- [ ] Mesh mode detects at least one case primitive mode misses, if a known pose is provided.
+
+**Dependencies:** Task 10.5.
+
+**Files likely touched:**
+- `collision_profiles/nachi_mz04d_mesh_collision.json`
+- `tests/integration/NachiMeshCollisionTests.*`
+- optional example visual QA docs.
+
+**Estimated scope:** Medium to Large.
+
+### Task 10.7: Evaluate Optional Mesh Simplification
+
+**Description:** Add offline simplification only after original mesh mode works.
+
+**Acceptance criteria:**
+- [ ] Original mesh remains the accuracy baseline.
+- [ ] Simplified mesh records method, source, triangle count, and max error.
+- [ ] Simplified mode adds margin when simplification error is non-zero or unknown.
+- [ ] Open3D, CGAL, or libigl usage is documented as offline tooling, not public API.
+
+**Verification:**
+- [ ] Compare original and simplified collision results on selected poses.
+- [ ] Record speedup and behavior differences.
+
+**Dependencies:** Task 10.6.
+
+**Files likely touched:**
+- `tools/mesh_simplification/`
+- `collision_profiles/*_simplified*.json`
+- docs.
+
+**Estimated scope:** Medium.
+
+### Task 10.8: Add Mesh Mode To Qt/VTK Example
+
+**Description:** Let the existing visualizer compare primitive and mesh collision modes.
+
+**Acceptance criteria:**
+- [ ] Persistent controls live in `mainwindow.ui`.
+- [ ] Styles live in QSS through QRC.
+- [ ] Existing `.pro` remains canonical.
+- [ ] UI shows backend availability and selected mode.
+- [ ] Mesh collision truth comes from RobotKinematics backend, not VTK actor intersections.
+
+**Verification:**
+- [ ] Example builds with selected backend.
+- [ ] Manual QA covers a primitive miss that mesh mode detects.
+
+**Dependencies:** Task 10.6.
+
+**Files likely touched:**
+- `examples/Robot3DVizualize/...`
+
+**Estimated scope:** Medium.
+
+### Checkpoint: Mesh Backend Decision
+
+After Task 10.1:
+
+- [ ] Coal/FCL/VTK spike result is reviewed.
+- [ ] Backend choice is accepted by the user.
+- [ ] Agent may proceed to Task 10.2 only after the choice is clear.
+
 ### Task 9.4: Implement Sphere/Capsule Self-Collision
 
 **Description:** Add broad-phase and narrow-phase primitive distance checks for sphere and capsule geometry.
@@ -881,9 +1103,11 @@ to machine precision). Other morphologies report unsupported and fall back to th
 | Posture semantics differ by vendor | Medium | Keep base posture generic; implement per-preset resolver. |
 | URDF cannot represent all canonical metadata | Medium | Treat URDF as adapter only; warn on metadata loss. |
 | Scope expands to many robot families too early | High | Keep phase 1 serial 6DOF only; require approval for new robot family implementation. |
-| Collision checking becomes too heavy | High | Keep runtime primitive-only for MVP; use STL only as an authoring helper input; avoid VTK or mesh dependencies in core. |
+| Collision checking becomes too heavy | High | Keep primitive fallback; cache mesh BVHs; measure original mesh before adding simplification. |
 | Primitive collision geometry is treated as safety-rated | High | Document profiles as conservative approximations; return diagnostics but make no physical safety claim. |
 | Adjacent robot links report false collisions | Medium | Require explicit disabled-pair rules with reasons in each collision profile. |
+| Mesh backend dependency is difficult to ship | High | Run dependency spike first; keep mesh backend optional; keep public API backend-neutral. |
+| Mesh transforms do not match canonical links | High | Require explicit `meshToLink` metadata and visual QA before accepting a real mesh profile. |
 
 ## Parallelization Opportunities
 
@@ -910,6 +1134,7 @@ Needs coordination:
 - Solver residual tolerance and acceptance tests.
 - URDF adapter and canonical model field changes.
 - Collision profile dimensions and disabled-pair rules.
+- Mesh backend dependency choice and qmake integration.
 
 ## Open Questions To Resolve Later
 
@@ -920,3 +1145,4 @@ Needs coordination:
 - Check whether solver defaults need tuning after empirical validation.
 - How much analytic IK work should be pulled earlier if numerical multi-seed posture coverage is not enough for Kawasaki/Nachi.
 - Whether to add box/cylinder primitives after sphere/capsule collision performance and ergonomics are measured.
+- Which mesh backend to choose after the Phase 10.1 dependency spike.

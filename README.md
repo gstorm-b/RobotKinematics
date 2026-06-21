@@ -2,13 +2,13 @@
 
 RobotKinematics is a planned C++/Eigen backend library for industrial robot kinematics.
 
-The library will support forward kinematics, inverse kinematics, joint-limit validation, user frames, tool frames, custom robot presets, reusable solver interfaces, and a planned primitive self-collision extension. It has no UI.
+The library will support forward kinematics, inverse kinematics, joint-limit validation, user frames, tool frames, custom robot presets, reusable solver interfaces, primitive self-collision checks, and an accurate mesh collision backend. It has no UI.
 
 ## Current Status
 
 The base serial 6DOF library milestone is implemented. The codebase includes the Qt/qmake static library, Qt Test runner, core units and `Pose`, canonical serial robot model, model validation, joint-limit validation, frame/tool registries, FK, numerical IK, posture-aware solution selection, JSON preset loading, `Virtual6DofTestArm`, standard DH import, URDF-like import/export, and a hybrid analytic IK plugin for supported spherical-wrist 6R robots.
 
-Primitive self-collision detection is the next approved extension. Runtime checks will use lightweight primitive profiles, not STL triangle meshes. See [docs/collision_detection_plan.md](docs/collision_detection_plan.md).
+Primitive self-collision detection is implemented as a fast approximate/debug path. Phase 10 backend-neutral mesh scaffolding is now in place: mesh profile types/loaders, STL mesh normalization, a default no-backend `UnsupportedSolver` path, and an optional Coal adapter behind qmake flags are implemented. Synthetic Coal backend tests pass; the next mesh-collision task is authoring the real Nachi MZ04D STL mesh profile. See [docs/mesh_collision_backend_plan.md](docs/mesh_collision_backend_plan.md) and [docs/mesh_collision_backend_spike.md](docs/mesh_collision_backend_spike.md).
 
 Real preset status:
 
@@ -22,9 +22,10 @@ Read these files in order:
 1. [Project Spec](docs/robot_kinematics_spec.md)
 2. [Implementation Plan](docs/robot_kinematics_implementation_plan.md)
 3. [Preset JSON Schema](docs/robot_preset_json_schema.md)
-4. [Collision Detection Plan](docs/collision_detection_plan.md), if you are working on the collision module
-5. [Developer Onboarding](docs/developer_onboarding.md)
-6. [Agent Instructions](AGENTS.md), if you are an AI/code agent working on this repo
+4. [Collision Detection Plan](docs/collision_detection_plan.md), if you are working on primitive collision
+5. [Mesh Collision Backend Plan](docs/mesh_collision_backend_plan.md), if you are working on accurate mesh collision
+6. [Developer Onboarding](docs/developer_onboarding.md)
+7. [Agent Instructions](AGENTS.md), if you are an AI/code agent working on this repo
 
 If you want to **use RobotKinematics as a library** (rather than work on it), see the
 [Developer Guide](docs/developer-guide/README.md) — building/linking, usage examples, an API
@@ -44,7 +45,7 @@ reference, conventions/gotchas, and architecture decision records.
 - Preset format: JSON schema `robot-kinematics-preset/v1`.
 - First preset: `Virtual6DofTestArm`.
 - First numerical IK method: adaptive damped least squares.
-- Collision detection direction: primitive self-collision profiles, with STL only as an optional authoring-helper input.
+- Collision detection direction: primitive fallback/debug plus backend-neutral accurate mesh scaffolding, with Coal available as an optional compiled backend.
 
 ## First Milestone
 

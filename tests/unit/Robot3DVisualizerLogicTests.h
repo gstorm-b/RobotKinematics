@@ -12,4 +12,5 @@ private slots:
     void appliesCenteringToolHomeVisualCorrection();
     void mapsPostureBranchesToConfiguredLabels();
     void formatsKinematicsStatusesForUi();
+    void derivesSimplifiedMeshProfilePathBesideOriginal();
 };

@@ -248,11 +248,13 @@ Frame/tool transforms must use the same `Pose` representation and SI units as th
 
 ### Collision Detection Extension
 
-Collision detection is a post-base-library extension. The approved MVP is fast conservative
-self-collision for serial robot joint states using primitive geometry.
+Collision detection is a post-base-library extension. Phase 9 provides fast conservative
+self-collision for serial robot joint states using primitive geometry. Phase 10 adds an accurate mesh
+collision backend for STL-part coverage.
 
-Runtime collision checking must not use STL triangle meshes and must not depend on VTK. STL files may
-be used only by helper tooling that proposes primitive shapes for manual review.
+The primitive backend must not use STL triangle meshes. The mesh backend may use STL-derived triangle
+meshes, but only through RobotKinematics-owned data types and internal backend adapters. VTK remains
+example/debug-only unless the user explicitly approves a core VTK dependency.
 
 MVP collision shapes:
 
@@ -345,6 +347,15 @@ struct CollisionCheckResult {
 Collision profiles use SI units. Runtime code should load collision profiles explicitly from a
 separate `robot-kinematics-collision/v1` artifact. Preset JSON may reference collision profiles in
 `metadata`, but collision data is not required by `robot-kinematics-preset/v1`.
+
+Accurate mesh collision uses a separate `robot-kinematics-collision-mesh/v1` artifact. Mesh profiles
+must declare source units, `scaleToMeters`, and an explicit `meshToLink` transform for each mesh.
+Third-party backend types from Coal, FCL, VTK, Open3D, CGAL, or libigl must not appear in public
+RobotKinematics headers.
+
+Phase 10 may expose RobotKinematics-owned backend availability queries and mesh-profile/STL loading
+APIs before a production mesh backend is compiled. In that default no-backend configuration, mesh
+collision requests should return `UnsupportedSolver` while primitive collision remains available.
 
 ### Presets
 
@@ -577,6 +588,9 @@ include/
       CollisionGeometry.h
       CollisionProfile.h
       CollisionChecker.h
+      CollisionBackend.h
+      MeshCollisionProfile.h
+      StlMeshLoader.h
     Posture/
       ArmPosture.h
       PostureResolver.h
@@ -687,7 +701,8 @@ For Virtual6DofTestArm, phase 1 must support posture classification and posture-
 - Keep core calculations in meter/radian.
 - Use explicit helper names for mm/degree APIs.
 - Keep FK/IK core independent from URDF parser details.
-- Keep collision runtime independent from STL/VTK triangle mesh logic.
+- Keep primitive collision independent from STL/VTK triangle mesh logic.
+- Keep mesh collision backend libraries behind internal adapters.
 - Return structured statuses for IK failure modes.
 - Add tests for every public behavior added.
 - Document solver assumptions and limitations.
@@ -697,7 +712,7 @@ For Virtual6DofTestArm, phase 1 must support posture classification and posture-
 - Changing unit convention.
 - Changing public API names.
 - Adding third-party dependencies beyond Eigen/Qt/test framework.
-- Adding runtime mesh collision or external collision libraries.
+- Adding or changing runtime mesh collision dependencies.
 - Claiming physical robot accuracy.
 - Expanding implementation scope to SCARA, delta, parallel, 4DOF, or 5DOF.
 - Making URDF the canonical model.

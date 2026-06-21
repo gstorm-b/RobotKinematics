@@ -261,6 +261,7 @@ CollisionCheckResult CollisionChecker::check(const SerialRobotConfig& config,
                     geometryB.linkId,
                     false,
                     distance,
+                    0,
                 });
                 continue;
             }
@@ -275,6 +276,7 @@ CollisionCheckResult CollisionChecker::check(const SerialRobotConfig& config,
                 geometryB.linkId,
                 colliding,
                 distance,
+                0,
             });
 
             if (colliding) {

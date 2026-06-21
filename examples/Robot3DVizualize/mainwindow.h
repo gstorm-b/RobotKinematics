@@ -3,8 +3,10 @@
 
 #include <QMainWindow>
 
+#include <RobotKinematics/Collision/CollisionBackend.h>
 #include <RobotKinematics/Collision/CollisionChecker.h>
 #include <RobotKinematics/Collision/CollisionProfile.h>
+#include <RobotKinematics/Collision/MeshCollisionProfile.h>
 #include <RobotKinematics/Kinematics/ForwardKinematics.h>
 #include <RobotKinematics/Kinematics/SerialRobotKinematics.h>
 #include <RobotKinematics/Model/FrameRegistry.h>
@@ -70,16 +72,42 @@ private:
         vtkSmartPointer<vtkActor> capEndActor;
     };
 
+    struct MeshDebugState {
+        std::string meshId;
+        std::string linkId;
+        RobotKinematics::Pose meshToLink = RobotKinematics::Pose::identity();
+        double stlScaleToMm = 1.0;
+        std::array<double, 3> baseColorRgb = {0.2, 0.85, 0.85};
+        vtkSmartPointer<vtkActor> actor;
+    };
+
+    enum class BackendSelection {
+        Primitive,
+        MeshOriginal,
+        MeshSimplified,
+    };
+
+    struct MeshProfileState {
+        RobotKinematics::MeshCollisionProfile profile;
+        bool loaded = false;
+        bool valid = false;
+        QString source;
+        QString note;
+    };
+
     void setupVtkViewport();
     void setupModelState();
     void setupUiState();
     void connectSignals();
     void loadRobotVisuals();
     void loadCollisionProfile();
+    void loadMeshCollisionProfiles();
     void loadCollisionDebugVisuals();
+    void loadMeshCollisionDebugVisuals();
     void applyJointStateToSceneAndReadouts();
     void updateSceneFromChain(const RobotKinematics::FkChain& chain);
     void updateCollisionDebugVisuals(const RobotKinematics::FkChain& chain);
+    void updateMeshDebugVisuals(const RobotKinematics::FkChain& chain);
     void updatePoseReadouts(const RobotKinematics::FkChain& chain);
     void updateJointStatus(const RobotKinematics::JointVector& joints);
     void updateCurrentPosture(const RobotKinematics::JointVector& joints);
@@ -91,6 +119,7 @@ private:
     void populatePostureControls();
     void populateSampleButtons();
     void populateCollisionControls();
+    void populateBackendControls();
     void populateDebugControls();
     void applyDebugVisualState();
     void resetTargetToCurrentTcp();
@@ -122,8 +151,14 @@ private:
     std::unique_ptr<RobotKinematics::PostureResolver> postureResolver_;
     RobotKinematics::CollisionProfile collisionProfile_;
     bool collisionProfileAvailable_ = false;
+    MeshProfileState meshOriginalProfile_;
+    MeshProfileState meshSimplifiedProfile_;
+    RobotKinematics::CollisionBackendInfo meshBackendInfo_;
+    BackendSelection backendSelection_ = BackendSelection::Primitive;
     std::vector<VisualPartState> visualParts_;
     std::vector<PrimitiveDebugState> primitiveDebugStates_;
+    std::vector<MeshDebugState> meshOriginalDebugStates_;
+    std::vector<MeshDebugState> meshSimplifiedDebugStates_;
     std::vector<RobotKinematics::IKSolution> lastIkSolutions_;
     std::vector<RobotKinematics::CollisionPairResult> lastCollisionPairs_;
     std::set<std::string> collidingGeometryIds_;

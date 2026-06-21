@@ -99,6 +99,22 @@ void Robot3DVisualizerLogicTests::formatsKinematicsStatusesForUi()
              QString("Posture constraint unsatisfied"));
 }
 
+void Robot3DVisualizerLogicTests::derivesSimplifiedMeshProfilePathBesideOriginal()
+{
+    QCOMPARE(Robot3DVisualizer::meshProfileSimplifiedPath(QString()), QString());
+
+    QCOMPARE(Robot3DVisualizer::meshProfileSimplifiedPath(
+                 QStringLiteral("collision_profiles/nachi_mz04d_mesh_collision.json")),
+             QString(QStringLiteral("collision_profiles/nachi_mz04d_mesh_collision_simplified.json")));
+
+    // Bare filenames inherit QFileInfo::dir() == ".", so the result is "./<name>_simplified.<ext>".
+    QCOMPARE(Robot3DVisualizer::meshProfileSimplifiedPath(QStringLiteral("foo_mesh.json")),
+             QString(QStringLiteral("./foo_mesh_simplified.json")));
+
+    QCOMPARE(Robot3DVisualizer::meshProfileSimplifiedPath(QStringLiteral("/abs/dir/foo")),
+             QString(QStringLiteral("/abs/dir/foo_simplified")));
+}
+
 int runRobot3DVisualizerLogicTests(int argc, char** argv)
 {
     Robot3DVisualizerLogicTests tests;

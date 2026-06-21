@@ -1,6 +1,7 @@
 #pragma once
 
 #include <RobotKinematics/Collision/CollisionProfile.h>
+#include <RobotKinematics/Collision/StlMeshLoader.h>
 #include <RobotKinematics/Core/Result.h>
 
 #include <array>
@@ -8,11 +9,6 @@
 #include <string>
 
 namespace RobotKinematics {
-
-enum class StlFileFormat {
-    Ascii,
-    Binary
-};
 
 struct StlMeshStatistics {
     std::size_t triangleCount = 0;

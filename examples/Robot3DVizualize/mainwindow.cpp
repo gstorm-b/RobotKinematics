@@ -20,6 +20,8 @@
 #include <RobotKinematics/Collision/BuiltInCollisionProfiles.h>
 #include <RobotKinematics/Collision/CollisionProfileJsonLoader.h>
 #include <RobotKinematics/Collision/CollisionProfileValidator.h>
+#include <RobotKinematics/Collision/MeshCollisionProfileJsonLoader.h>
+#include <RobotKinematics/Collision/MeshCollisionProfileValidator.h>
 #include <RobotKinematics/Core/Units.h>
 #include <RobotKinematics/Kinematics/JointLimitValidator.h>
 #include <RobotKinematics/Presets/NachiMZ04D.h>
@@ -331,6 +333,7 @@ MainWindow::MainWindow(QWidget *parent)
     connectSignals();
     loadRobotVisuals();
     loadCollisionDebugVisuals();
+    loadMeshCollisionDebugVisuals();
 
     setJointDegrees(homeDegrees(config_));
     resetTargetToCurrentTcp();
@@ -404,6 +407,8 @@ void MainWindow::setupModelState()
     }
 
     loadCollisionProfile();
+    loadMeshCollisionProfiles();
+    meshBackendInfo_ = CollisionBackends::meshInfo();
 }
 
 void MainWindow::setupUiState()
@@ -416,6 +421,7 @@ void MainWindow::setupUiState()
     populatePostureControls();
     populateSampleButtons();
     populateCollisionControls();
+    populateBackendControls();
     populateDebugControls();
 
     ui->ikResultsTableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
@@ -462,8 +468,19 @@ void MainWindow::connectSignals()
     connect(ui->ikResultsTableWidget, &QTableWidget::itemSelectionChanged, this, &MainWindow::updateActionState);
     connect(ui->collisionSafetyMarginSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
             [this](double) { applyJointStateToSceneAndReadouts(); });
-    connect(ui->showPrimitiveShapesCheckBox, &QCheckBox::toggled, this,
+    connect(ui->showCollisionShapesCheckBox, &QCheckBox::toggled, this,
             [this](bool) { applyDebugVisualState(); });
+    connect(ui->enableCollisionCheckBox, &QCheckBox::toggled, this,
+            [this](bool) { applyJointStateToSceneAndReadouts(); });
+    connect(ui->collisionBackendComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            [this](int index) {
+                const QVariant data = ui->collisionBackendComboBox->itemData(index);
+                if (!data.isValid()) {
+                    return;
+                }
+                backendSelection_ = static_cast<BackendSelection>(data.toInt());
+                applyJointStateToSceneAndReadouts();
+            });
 
     for (QCheckBox* checkBox : partVisibleCheckBoxes()) {
         connect(checkBox, &QCheckBox::toggled, this, [this](bool) { applyDebugVisualState(); });
@@ -559,18 +576,83 @@ void MainWindow::populateSampleButtons()
 void MainWindow::populateCollisionControls()
 {
     ui->collisionSafetyMarginSpinBox->setSuffix(QStringLiteral(" mm"));
-    ui->showPrimitiveShapesCheckBox->setChecked(false);
-    ui->showPrimitiveShapesCheckBox->setEnabled(collisionProfileAvailable_);
+    ui->enableCollisionCheckBox->setChecked(true);
+    ui->showCollisionShapesCheckBox->setChecked(false);
     ui->collisionProfileValueLabel->setText(
         collisionProfileAvailable_ ? collisionProfileSource_ : QStringLiteral("Unavailable"));
     ui->collisionProfileNoteLabel->setText(
         collisionProfileNote_.isEmpty()
-            ? QStringLiteral("Collision truth comes from conservative primitives, not STL meshes. Use the checkbox below to render the runtime sphere/capsule approximation directly in the scene. Non-colliding pair distances are diagnostic and conservative.")
-            : collisionProfileNote_ + QStringLiteral(" Use the checkbox below to render the runtime sphere/capsule approximation directly in the scene. Non-colliding pair distances are diagnostic and conservative."));
+            ? QStringLiteral("Collision truth comes from the selected RobotKinematics backend (primitive or mesh). VTK is only used for rendering and never as the collision oracle.")
+            : collisionProfileNote_);
     ui->collisionStatusLabel->setText(
         collisionProfileAvailable_
             ? QStringLiteral("Collision status will update with the current joint state.")
-            : QStringLiteral("Collision checking is unavailable until a valid primitive profile loads."));
+            : QStringLiteral("Collision checking is unavailable until a valid profile loads."));
+}
+
+void MainWindow::loadMeshCollisionDebugVisuals()
+{
+    const auto removeActors = [this](std::vector<MeshDebugState>& states) {
+        for (MeshDebugState& state : states) {
+            if (state.actor) {
+                renderer_->RemoveActor(state.actor);
+            }
+        }
+        states.clear();
+    };
+    removeActors(meshOriginalDebugStates_);
+    removeActors(meshSimplifiedDebugStates_);
+
+    const auto loadStatesFor = [this](const MeshProfileState& profileState,
+                                      std::vector<MeshDebugState>& output,
+                                      const std::array<double, 3>& color) {
+        if (!profileState.valid) {
+            return;
+        }
+        for (const MeshCollisionGeometry& mesh : profileState.profile.meshes) {
+            if (!mesh.enabled) {
+                continue;
+            }
+            const QFileInfo info(QString::fromStdString(mesh.path));
+            if (!info.exists()) {
+                continue;
+            }
+
+            vtkSmartPointer<vtkSTLReader> reader = vtkSmartPointer<vtkSTLReader>::New();
+            reader->SetFileName(info.absoluteFilePath().toLocal8Bit().constData());
+            reader->Update();
+            if (!reader->GetOutput() || reader->GetOutput()->GetNumberOfPoints() == 0) {
+                continue;
+            }
+
+            vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+            mapper->SetInputConnection(reader->GetOutputPort());
+
+            vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+            actor->SetMapper(mapper);
+            actor->GetProperty()->SetRepresentationToWireframe();
+            actor->GetProperty()->SetColor(color[0], color[1], color[2]);
+            actor->GetProperty()->SetLineWidth(1.0);
+            actor->VisibilityOff();
+            renderer_->AddActor(actor);
+
+            MeshDebugState state;
+            state.meshId = mesh.id;
+            state.linkId = mesh.linkId;
+            state.meshToLink = mesh.meshToLink;
+            // vtkSTLReader returns coordinates as authored in the file. scaleToMeters*1000 maps
+            // those authored values into the mm-based VTK world used by visualParts_.
+            state.stlScaleToMm = mesh.scaleToMeters * 1000.0;
+            state.baseColorRgb = color;
+            state.actor = actor;
+            output.push_back(state);
+        }
+    };
+
+    constexpr std::array<double, 3> kMeshOriginalColor = {0.20, 0.85, 0.85};
+    constexpr std::array<double, 3> kMeshSimplifiedColor = {0.95, 0.55, 0.15};
+    loadStatesFor(meshOriginalProfile_, meshOriginalDebugStates_, kMeshOriginalColor);
+    loadStatesFor(meshSimplifiedProfile_, meshSimplifiedDebugStates_, kMeshSimplifiedColor);
 }
 
 void MainWindow::loadCollisionDebugVisuals()
@@ -816,6 +898,7 @@ void MainWindow::updateSceneFromChain(const FkChain& chain)
     }
 
     updateCollisionDebugVisuals(chain);
+    updateMeshDebugVisuals(chain);
 
     applyDebugVisualState();
 }
@@ -869,6 +952,27 @@ void MainWindow::updateCollisionDebugVisuals(const FkChain& chain)
     }
 }
 
+void MainWindow::updateMeshDebugVisuals(const FkChain& chain)
+{
+    const auto updateGroup = [&chain](std::vector<MeshDebugState>& states) {
+        for (MeshDebugState& state : states) {
+            if (!state.actor) {
+                continue;
+            }
+            const auto linkIt = chain.linkPosesInBase.find(state.linkId);
+            if (linkIt == chain.linkPosesInBase.end()) {
+                continue;
+            }
+            const Pose meshInBase = linkIt->second * state.meshToLink;
+            const Eigen::Vector3d scaleMm = Eigen::Vector3d::Constant(state.stlScaleToMm);
+            state.actor->SetUserMatrix(
+                toVtkMatrix(scaledTransformMm(meshInBase, Eigen::Matrix3d::Identity(), scaleMm)));
+        }
+    };
+    updateGroup(meshOriginalDebugStates_);
+    updateGroup(meshSimplifiedDebugStates_);
+}
+
 void MainWindow::applyDebugVisualState()
 {
     const std::array<QCheckBox*, 8> visible = partVisibleCheckBoxes();
@@ -892,8 +996,16 @@ void MainWindow::applyDebugVisualState()
         }
     }
 
+    const bool showShapes = ui->showCollisionShapesCheckBox->isChecked();
     const bool showPrimitiveShapes =
-        collisionProfileAvailable_ && ui->showPrimitiveShapesCheckBox->isChecked();
+        showShapes && backendSelection_ == BackendSelection::Primitive && collisionProfileAvailable_;
+    const bool showMeshOriginalShapes =
+        showShapes && backendSelection_ == BackendSelection::MeshOriginal &&
+        meshOriginalProfile_.valid;
+    const bool showMeshSimplifiedShapes =
+        showShapes && backendSelection_ == BackendSelection::MeshSimplified &&
+        meshSimplifiedProfile_.valid;
+
     for (PrimitiveDebugState& primitive : primitiveDebugStates_) {
         const bool colliding =
             collidingGeometryIds_.find(primitive.geometryId) != collidingGeometryIds_.end();
@@ -912,6 +1024,22 @@ void MainWindow::applyDebugVisualState()
             primitive.capEndActor->SetVisibility(showPrimitiveShapes ? 1 : 0);
         }
     }
+
+    const auto applyMeshGroup = [&](std::vector<MeshDebugState>& states, bool visible) {
+        for (MeshDebugState& state : states) {
+            if (!state.actor) {
+                continue;
+            }
+            const bool colliding =
+                collidingGeometryIds_.find(state.meshId) != collidingGeometryIds_.end();
+            const std::array<double, 3>& color =
+                colliding ? kCollisionHighlightColor : state.baseColorRgb;
+            state.actor->GetProperty()->SetColor(color[0], color[1], color[2]);
+            state.actor->SetVisibility(visible ? 1 : 0);
+        }
+    };
+    applyMeshGroup(meshOriginalDebugStates_, showMeshOriginalShapes);
+    applyMeshGroup(meshSimplifiedDebugStates_, showMeshSimplifiedShapes);
 
     if (renderWindow_) {
         renderWindow_->Render();
@@ -1016,28 +1144,71 @@ void MainWindow::updateCollisionState(const JointVector& joints)
     collidingLinkIds_.clear();
     lastCollisionPairs_.clear();
 
-    if (!collisionProfileAvailable_) {
+    if (!ui->enableCollisionCheckBox->isChecked()) {
         ui->collisionStatusLabel->setText(
-            QStringLiteral("Collision checking unavailable: %1")
-                .arg(collisionProfileNote_.isEmpty() ? QStringLiteral("no valid profile loaded")
-                                                     : collisionProfileNote_));
+            QStringLiteral("Collision check disabled by 'Enable collision check' toggle."));
         ui->collisionPairsTableWidget->setRowCount(0);
         applyDebugVisualState();
         return;
     }
 
-    CollisionCheckRequest request;
-    request.joints = joints;
-    request.safetyMargin_m = units::mm(ui->collisionSafetyMarginSpinBox->value());
-    request.returnAllPairs = true;
+    CollisionCheckResult result;
+    QString backendSourceLabel;
+    bool backendReady = false;
 
-    const CollisionCheckResult result = CollisionChecker::check(config_, collisionProfile_, request);
+    switch (backendSelection_) {
+    case BackendSelection::Primitive: {
+        backendSourceLabel = collisionProfileSource_;
+        if (collisionProfileAvailable_) {
+            CollisionCheckRequest request;
+            request.joints = joints;
+            request.safetyMargin_m = units::mm(ui->collisionSafetyMarginSpinBox->value());
+            request.returnAllPairs = true;
+            result = CollisionBackends::checkPrimitive(config_, collisionProfile_, request);
+            backendReady = true;
+        } else {
+            result.status = KinematicsStatus::InvalidRequest;
+            result.message = collisionProfileNote_.isEmpty()
+                                 ? std::string("no valid primitive profile loaded")
+                                 : collisionProfileNote_.toStdString();
+        }
+        break;
+    }
+    case BackendSelection::MeshOriginal:
+    case BackendSelection::MeshSimplified: {
+        const MeshProfileState& profileState =
+            (backendSelection_ == BackendSelection::MeshOriginal) ? meshOriginalProfile_
+                                                                  : meshSimplifiedProfile_;
+        backendSourceLabel = profileState.source;
+        if (!meshBackendInfo_.available) {
+            result.status = KinematicsStatus::UnsupportedSolver;
+            result.message =
+                "mesh collision backend is not compiled into this build: " +
+                meshBackendInfo_.detail;
+        } else if (!profileState.valid) {
+            result.status = KinematicsStatus::InvalidRequest;
+            result.message = profileState.note.isEmpty()
+                                 ? std::string("mesh profile not loaded")
+                                 : profileState.note.toStdString();
+        } else {
+            MeshCollisionCheckRequest request;
+            request.joints = joints;
+            request.safetyMargin_m = units::mm(ui->collisionSafetyMarginSpinBox->value());
+            request.returnAllPairs = true;
+            result = CollisionBackends::checkMesh(config_, profileState.profile, request);
+            backendReady = true;
+        }
+        break;
+    }
+    }
+
     populateCollisionPairs(result);
 
-    if (!result.ok()) {
+    if (!backendReady || !result.ok()) {
         ui->collisionStatusLabel->setText(
-            QStringLiteral("%1: %2")
-                .arg(Robot3DVisualizer::statusText(result.status), QString::fromStdString(result.message)));
+            QStringLiteral("Collision checking unavailable (%1): %2")
+                .arg(Robot3DVisualizer::statusText(result.status),
+                     QString::fromStdString(result.message)));
         applyDebugVisualState();
         return;
     }
@@ -1056,9 +1227,21 @@ void MainWindow::updateCollisionState(const JointVector& joints)
         collidingLinkIds_.insert(pair.linkB);
     }
 
-    const QString sourceSuffix = collisionProfileSource_.isEmpty()
-                                     ? QString()
-                                     : QStringLiteral(" [%1]").arg(collisionProfileSource_);
+    const QString backendLabel = [this]() -> QString {
+        switch (backendSelection_) {
+        case BackendSelection::Primitive:
+            return QStringLiteral("primitive");
+        case BackendSelection::MeshOriginal:
+            return QStringLiteral("mesh-original");
+        case BackendSelection::MeshSimplified:
+            return QStringLiteral("mesh-simplified");
+        }
+        return QStringLiteral("unknown");
+    }();
+    const QString sourceSuffix = backendSourceLabel.isEmpty()
+                                     ? QStringLiteral(" [backend=%1]").arg(backendLabel)
+                                     : QStringLiteral(" [backend=%1; %2]")
+                                           .arg(backendLabel, backendSourceLabel);
     if (result.hasCollision) {
         ui->collisionStatusLabel->setText(
             QStringLiteral("Self-collision detected in %1 pair(s) with safety margin %2 mm.%3")
@@ -1077,7 +1260,7 @@ void MainWindow::updateCollisionState(const JointVector& joints)
     }
 
     ui->collisionStatusLabel->setText(
-        QStringLiteral("No self-collision detected for the current joint state with safety margin %1 mm. Enable primitive shapes to inspect the runtime approximation.%2")
+        QStringLiteral("No self-collision detected for the current joint state with safety margin %1 mm.%2")
             .arg(formatNumber(ui->collisionSafetyMarginSpinBox->value(), 3))
             .arg(sourceSuffix));
     applyDebugVisualState();
@@ -1428,6 +1611,135 @@ Result<std::optional<ArmPosture>> MainWindow::requestedPosture() const
         return Result<std::optional<ArmPosture>>::failure(posture.status, posture.message);
     }
     return Result<std::optional<ArmPosture>>::success(posture.value);
+}
+
+void MainWindow::loadMeshCollisionProfiles()
+{
+    meshOriginalProfile_ = MeshProfileState{};
+    meshSimplifiedProfile_ = MeshProfileState{};
+
+    const auto metadataIt = config_.metadata.find("meshCollisionProfile");
+    if (metadataIt == config_.metadata.end()) {
+        meshOriginalProfile_.note = QStringLiteral(
+            "Preset metadata has no `meshCollisionProfile` entry; mesh modes are unavailable.");
+        meshSimplifiedProfile_.note = meshOriginalProfile_.note;
+        return;
+    }
+
+    const QString relativeOriginal = QString::fromStdString(metadataIt->second);
+    const QString resolvedOriginal = findRepoRelativePath(relativeOriginal);
+    if (resolvedOriginal.isEmpty()) {
+        meshOriginalProfile_.note =
+            QStringLiteral("Preset references `%1`, but the file was not found.")
+                .arg(relativeOriginal);
+        meshSimplifiedProfile_.note = meshOriginalProfile_.note;
+        return;
+    }
+
+    const auto loadAndValidate = [this](const QString& path, MeshProfileState& state) {
+        state.loaded = false;
+        state.valid = false;
+        state.source.clear();
+        state.note.clear();
+
+        const Result<MeshCollisionProfile> loaded =
+            MeshCollisionProfileJsonLoader::loadFile(path.toStdString());
+        if (!loaded.ok()) {
+            state.note = QStringLiteral("Failed to load %1 (%2).")
+                             .arg(QDir::toNativeSeparators(path),
+                                  QString::fromStdString(loaded.message));
+            return;
+        }
+
+        const MeshCollisionProfileValidationResult validation =
+            MeshCollisionProfileValidator::validate(config_, loaded.value);
+        if (!validation.ok()) {
+            state.loaded = true;
+            state.source = QDir::toNativeSeparators(path);
+            state.note =
+                QStringLiteral("Validation failed: %1")
+                    .arg(QString::fromStdString(validation.issues.front().message));
+            return;
+        }
+
+        state.profile = loaded.value;
+        state.loaded = true;
+        state.valid = true;
+        state.source = QDir::toNativeSeparators(path);
+        state.note = QStringLiteral("%1 mesh(es) loaded; backend preference: ")
+                         .arg(loaded.value.meshes.size());
+        QStringList preferences;
+        for (MeshCollisionBackendKind backend : loaded.value.backendPreference) {
+            preferences << QString::fromStdString(toString(backend));
+        }
+        state.note += preferences.isEmpty() ? QStringLiteral("(none)") : preferences.join(QStringLiteral(", "));
+    };
+
+    loadAndValidate(resolvedOriginal, meshOriginalProfile_);
+
+    const QString relativeSimplified = Robot3DVisualizer::meshProfileSimplifiedPath(relativeOriginal);
+    const QString resolvedSimplified = findRepoRelativePath(relativeSimplified);
+    if (resolvedSimplified.isEmpty()) {
+        meshSimplifiedProfile_.note = QStringLiteral(
+            "Simplified mesh profile not found at `%1`. Run "
+            "scripts/run_mesh_simplification_nachi_msvc.bat to generate it.")
+            .arg(relativeSimplified);
+        return;
+    }
+
+    loadAndValidate(resolvedSimplified, meshSimplifiedProfile_);
+}
+
+void MainWindow::populateBackendControls()
+{
+    QSignalBlocker blocker(ui->collisionBackendComboBox);
+    ui->collisionBackendComboBox->clear();
+    ui->collisionBackendComboBox->addItem(
+        QStringLiteral("Primitive (sphere/capsule)"),
+        static_cast<int>(BackendSelection::Primitive));
+
+    const bool meshBackendAvailable = meshBackendInfo_.available;
+    if (meshBackendAvailable && meshOriginalProfile_.valid) {
+        ui->collisionBackendComboBox->addItem(
+            QStringLiteral("Mesh - Original STL"),
+            static_cast<int>(BackendSelection::MeshOriginal));
+    }
+    if (meshBackendAvailable && meshSimplifiedProfile_.valid) {
+        ui->collisionBackendComboBox->addItem(
+            QStringLiteral("Mesh - Simplified STL"),
+            static_cast<int>(BackendSelection::MeshSimplified));
+    }
+    ui->collisionBackendComboBox->setCurrentIndex(0);
+    backendSelection_ = BackendSelection::Primitive;
+
+    if (meshBackendInfo_.available) {
+        ui->meshBackendAvailabilityValueLabel->setText(
+            QStringLiteral("Available: %1 - %2")
+                .arg(QString::fromStdString(meshBackendInfo_.backendName),
+                     QString::fromStdString(meshBackendInfo_.detail)));
+    } else {
+        ui->meshBackendAvailabilityValueLabel->setText(
+            QStringLiteral("Unavailable: %1. Rebuild RobotKinematics with the optional mesh backend "
+                           "(scripts\\build_msvc_mesh_coal.bat) and relink the example to the "
+                           "_build_msvc_mesh_coal\\lib library to enable mesh modes.")
+                .arg(QString::fromStdString(meshBackendInfo_.detail)));
+    }
+
+    const auto stateText = [](const MeshProfileState& state) {
+        if (state.valid) {
+            return QStringLiteral("OK - %1 (%2)").arg(state.source, state.note);
+        }
+        if (state.loaded) {
+            return QStringLiteral("Invalid - %1").arg(state.note);
+        }
+        if (!state.note.isEmpty()) {
+            return state.note;
+        }
+        return QStringLiteral("Not loaded");
+    };
+
+    ui->meshOriginalProfileValueLabel->setText(stateText(meshOriginalProfile_));
+    ui->meshSimplifiedProfileValueLabel->setText(stateText(meshSimplifiedProfile_));
 }
 
 void MainWindow::loadCollisionProfile()

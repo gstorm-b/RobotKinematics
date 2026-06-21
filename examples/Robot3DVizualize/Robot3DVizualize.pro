@@ -11,8 +11,20 @@ INCLUDEPATH += \
     $$PWD/../../include \
     $$PWD/../../third_party/eigen
 
-LIBS += -L$$PWD/../../_build_msvc/lib -lRobotKinematics
-PRE_TARGETDEPS += $$PWD/../../_build_msvc/lib/RobotKinematics.lib
+# ROBOTKINEMATICS_LIB_DIR selects which RobotKinematics build to link against. The
+# default targets the no-mesh-backend MSVC build. To exercise the mesh backend
+# selector in this example, build the Coal-enabled library and pass
+#   qmake ... "ROBOTKINEMATICS_LIB_DIR=<repo>/_build_msvc_mesh_coal/lib"
+isEmpty(ROBOTKINEMATICS_LIB_DIR): ROBOTKINEMATICS_LIB_DIR = $$(ROBOTKINEMATICS_LIB_DIR)
+isEmpty(ROBOTKINEMATICS_LIB_DIR): ROBOTKINEMATICS_LIB_DIR = $$PWD/../../_build_msvc/lib
+
+LIBS += -L$$ROBOTKINEMATICS_LIB_DIR -lRobotKinematics
+PRE_TARGETDEPS += $$ROBOTKINEMATICS_LIB_DIR/RobotKinematics.lib
+
+# Pull in optional mesh backend link flags (Coal/Boost/Assimp) when the example
+# is linked against a Coal-enabled RobotKinematics build. Activated via
+#   qmake ... "CONFIG+=robotkinematics_mesh_collision" "MESH_COLLISION_BACKEND=coal" ...
+include($$PWD/../../mesh_collision_backend.pri)
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.

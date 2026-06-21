@@ -7,6 +7,8 @@
 
 #include <Eigen/Core>
 
+#include <QDir>
+#include <QFileInfo>
 #include <QString>
 
 #include <cmath>
@@ -88,6 +90,24 @@ inline QString postureLabel(const RobotKinematics::PostureMetadata& posture,
     }
 
     return QString::fromStdString(*branch < 0 ? it->second.negative : it->second.positive);
+}
+
+// Returns the conventional simplified-profile path next to an original mesh
+// profile path: foo_mesh_collision.json -> foo_mesh_collision_simplified.json.
+// Preserves the original directory and extension. Empty input yields empty output.
+inline QString meshProfileSimplifiedPath(const QString& originalPath)
+{
+    if (originalPath.isEmpty()) {
+        return QString();
+    }
+    const QFileInfo info(originalPath);
+    const QString base = info.completeBaseName();
+    const QString suffix = info.suffix();
+    QString simplifiedName = base + QStringLiteral("_simplified");
+    if (!suffix.isEmpty()) {
+        simplifiedName += QStringLiteral(".") + suffix;
+    }
+    return info.dir().filePath(simplifiedName);
 }
 
 inline QString statusText(RobotKinematics::KinematicsStatus status)

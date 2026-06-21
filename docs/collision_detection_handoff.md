@@ -8,6 +8,9 @@ Runtime collision checks must use lightweight primitive shapes only. STL files a
 runtime collision. STL can be used by an authoring helper to propose primitive geometry that a human
 reviews before adding it to a collision profile.
 
+This handoff is for Phase 9 primitive collision. For accurate STL-backed mesh collision, use
+`docs/mesh_collision_backend_plan.md` and `docs/mesh_collision_backend_handoff.md`.
+
 ## Start Here
 
 Read these files before implementation:
@@ -39,7 +42,8 @@ The runtime still remains primitive-only and not safety-rated. STL remains autho
 ## Hard Rules
 
 - Core runtime must not depend on VTK.
-- Core runtime must not use STL triangle meshes for collision checking.
+- Phase 9 primitive runtime must not use STL triangle meshes for collision checking. Phase 10 mesh
+  collision is a separate backend plan.
 - Use meter and radian only in core/profile data.
 - Helper names must include units when they accept raw numeric values.
 - Collision found at a valid joint state is not a `KinematicsStatus` failure.

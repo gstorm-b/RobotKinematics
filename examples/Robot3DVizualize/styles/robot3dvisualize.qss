@@ -47,7 +47,10 @@ QLabel#collisionProfileNoteLabel {
 }
 
 QLabel#collisionStatusLabel,
-QLabel#collisionProfileValueLabel {
+QLabel#collisionProfileValueLabel,
+QLabel#meshBackendAvailabilityValueLabel,
+QLabel#meshOriginalProfileValueLabel,
+QLabel#meshSimplifiedProfileValueLabel {
     color: #22343e;
     background: #edf3f6;
     border: 1px solid #cfd8df;

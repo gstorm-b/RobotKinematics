@@ -1,0 +1,56 @@
+@echo off
+setlocal
+
+if "%QT_CMAKE%"=="" set "QT_CMAKE=C:\Qt\Tools\CMake_64\bin\cmake.exe"
+if "%VCVARS%"=="" set "VCVARS=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
+
+set "ROOT=%~dp0.."
+set "SRC=%ROOT%\third_party\coal"
+set "BUILD=%ROOT%\_build_third_party\coal"
+set "INSTALL=%ROOT%\third_party\install\coal"
+set "FCL_INSTALL=%ROOT%\third_party\install\fcl"
+set "LIBCCD_INSTALL=%ROOT%\third_party\install\libccd"
+set "ASSIMP_INSTALL=%ROOT%\third_party\install\assimp"
+set "BOOST_INSTALL=%ROOT%\third_party\install\boost"
+set "EIGEN_INCLUDE=%ROOT%\third_party\eigen"
+
+if not exist "%SRC%\CMakeLists.txt" (
+    echo [ERROR] Coal source was not found at %SRC%
+    exit /b 1
+)
+
+call "%VCVARS%"
+if errorlevel 1 exit /b 1
+
+set "LIB=%BOOST_INSTALL%\lib;%LIB%"
+set "PATH=%ASSIMP_INSTALL%\bin;%BOOST_INSTALL%\lib;%PATH%"
+
+if not exist "%BUILD%" mkdir "%BUILD%"
+
+"%QT_CMAKE%" -S "%SRC%" -B "%BUILD%" -G "Ninja" ^
+    -DCMAKE_BUILD_TYPE=Release ^
+    -DCMAKE_INSTALL_PREFIX="%INSTALL%" ^
+    -DCMAKE_PREFIX_PATH="%FCL_INSTALL%;%LIBCCD_INSTALL%;%ASSIMP_INSTALL%" ^
+    -DEigen3_DIR="" ^
+    -DEIGEN3_INCLUDE_DIR="%EIGEN_INCLUDE%" ^
+    -DASSIMP_ROOT_DIR="%ASSIMP_INSTALL%" ^
+    -DBoost_ROOT="%BOOST_INSTALL%" ^
+    -DBOOST_ROOT="%BOOST_INSTALL%" ^
+    -DBoost_INCLUDE_DIR="%BOOST_INSTALL%\include\boost-1_87" ^
+    -DBoost_LIBRARY_DIR_RELEASE="%BOOST_INSTALL%\lib" ^
+    -DBoost_LIBRARY_DIR_DEBUG="%BOOST_INSTALL%\lib" ^
+    -DBoost_NO_SYSTEM_PATHS=ON ^
+    -DBUILD_TESTING=OFF ^
+    -DBUILD_PYTHON_INTERFACE=OFF ^
+    -DINSTALL_DOCUMENTATION=OFF ^
+    -DCOAL_ENABLE_LOGGING=OFF
+if errorlevel 1 exit /b 1
+
+"%QT_CMAKE%" --build "%BUILD%"
+if errorlevel 1 exit /b 1
+
+"%QT_CMAKE%" --install "%BUILD%"
+if errorlevel 1 exit /b 1
+
+echo [OK] Coal built and installed to %INSTALL%
+exit /b 0

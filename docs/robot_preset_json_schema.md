@@ -217,12 +217,14 @@ Unknown top-level fields are invalid. Put extension data inside `metadata`.
 Collision geometry is not a required top-level field in `robot-kinematics-preset/v1`.
 
 Primitive collision profiles use a separate artifact with schema id
-`robot-kinematics-collision/v1`. A preset may reference a collision profile from `metadata`:
+`robot-kinematics-collision/v1`. Accurate mesh collision profiles use
+`robot-kinematics-collision-mesh/v1`. A preset may reference profiles from `metadata`:
 
 ```json
 {
   "metadata": {
-    "collisionProfile": "collision_profiles/nachi_mz04d_collision.json"
+    "collisionProfile": "collision_profiles/nachi_mz04d_collision.json",
+    "meshCollisionProfile": "collision_profiles/nachi_mz04d_mesh_collision.json"
   }
 }
 ```
@@ -291,3 +293,63 @@ For a sphere, use:
 ```
 
 Collision profile loaders must reject unknown top-level fields unless they are under `metadata`.
+
+## Mesh Collision Profile Schema Direction
+
+Mesh collision profile files use schema id `robot-kinematics-collision-mesh/v1`.
+
+The mesh profile is separate from both the robot preset and the primitive collision profile. Mesh
+profiles must explicitly declare source units, scale to meters, and the transform from mesh-local
+coordinates into the canonical link frame.
+
+Minimum shape:
+
+```json
+{
+  "schema": "robot-kinematics-collision-mesh/v1",
+  "profile": {
+    "id": "nachi_mz04d_stl_mesh_collision",
+    "robotModel": "MZ04D",
+    "units": { "length": "m", "angle": "rad" },
+    "backendPreference": ["coal", "fcl", "vtk_debug"]
+  },
+  "meshes": [
+    {
+      "id": "j2_mesh",
+      "link": "link_2",
+      "path": "examples/Robot3DVizualize/3d_model/MZ04-01_j2.stl",
+      "format": "stl",
+      "sourceUnits": "mm",
+      "scaleToMeters": 0.001,
+      "meshToLink": {
+        "xyz_m": [0.0, 0.0, 0.0],
+        "rpy_rad": [0.0, 0.0, 0.0]
+      },
+      "margin_m": 0.0,
+      "enabled": true,
+      "quality": {
+        "mode": "original",
+        "triangleCount": null,
+        "simplifiedFrom": null,
+        "maxSimplificationError_m": null
+      }
+    }
+  ],
+  "disabledPairs": [],
+  "sources": [],
+  "metadata": {}
+}
+```
+
+Runtime mesh collision backends are optional and must stay behind RobotKinematics-owned adapter
+interfaces.
+
+When a mesh profile is loaded with `MeshCollisionProfileJsonLoader::loadFile(path)`, relative mesh
+paths are resolved relative to the directory containing that mesh-profile JSON file. Profiles loaded
+from an in-memory JSON string with `loadJson(json)` preserve paths as authored, so programmatic users
+must provide absolute paths or set their own working-directory convention before passing the profile
+to a backend.
+
+Numeric mesh fields are strict JSON numbers. `meshToLink.xyz_m`, `meshToLink.rpy_rad`,
+`scaleToMeters`, `margin_m`, `quality.triangleCount`, and `quality.maxSimplificationError_m` must not
+be strings or non-finite values.

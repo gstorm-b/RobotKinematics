@@ -9,7 +9,7 @@ It will let developer engineers:
 - define or load a robot model;
 - compute forward kinematics;
 - solve inverse kinematics;
-- validate joint limits and planned primitive self-collision profiles;
+- validate joint limits, primitive self-collision profiles, and planned accurate mesh collision profiles;
 - configure base/user/tool frames;
 - load custom robot presets;
 - choose IK solutions using seed, previous joint state, posture, and options.
@@ -56,7 +56,10 @@ Current implementation status:
 - Phase 6 real presets: Nachi MZ04D is implemented from teach-pendant data; Kawasaki RS007N remains blocked until verified source data is provided.
 - Phase 7 exists for standard DH import to canonical config and URDF-like export/import. Modified DH remains a later adapter extension.
 - Phase 8 analytic IK capability detection and spherical-wrist analytic IK are implemented for supported morphologies.
-- Phase 9 primitive self-collision detection is approved and planned, but not implemented yet.
+- Phase 9 primitive self-collision detection is implemented as a fast approximate/debug path.
+- Phase 10 mesh collision is partially implemented: backend-neutral public types, mesh-profile
+  load/validation, STL normalization, a VTK debug spike, and an optional Coal adapter now exist.
+  The default build still does not compile a mesh backend unless explicit qmake flags are enabled.
 
 ## Key Architecture Decisions
 
@@ -117,14 +120,23 @@ Nachi MZ04D is available as a real preset. Kawasaki RS007N should be added only 
 
 ### Collision
 
-The planned collision module is primitive-first and runtime-lightweight.
+The collision module currently has a primitive-first runtime path.
 
 - Runtime collision checks use sphere/capsule profiles.
-- STL files are not runtime collision geometry.
+- STL files are not used by the primitive backend.
 - STL may be used by helper tooling to propose draft primitives for manual review.
 - Collision profiles use a separate schema, `robot-kinematics-collision/v1`.
 - Collision found at a valid joint state is represented by `hasCollision`, not a failure status.
 - No physical safety or calibration accuracy claim is made.
+
+The current Phase 10 extension keeps public APIs RobotKinematics-owned and backend-neutral. Mesh
+profile loading, validation, and STL normalization are available in the default build. Real runtime
+mesh collision is available only when the optional Coal adapter is compiled; otherwise mesh requests
+still return a structured unsupported result. Coal/FCL/VTK/Open3D/CGAL/libigl types must not leak
+into public headers. Mesh assets must declare source units, `scaleToMeters`, and explicit
+`meshToLink` transforms. Relative mesh paths loaded from mesh-profile files resolve against the
+profile JSON directory. Optional backend dependency checkouts/install roots under `third_party` are
+local development artifacts and should not be committed, except for the tracked Eigen dependency.
 
 ## Planned Source Layout
 
@@ -180,6 +192,15 @@ scripts\build_mingw.bat
 scripts\test_mingw.bat
 ```
 
+Optional Coal mesh-backend flow:
+
+```powershell
+scripts\build_msvc_mesh_coal.bat
+scripts\test_msvc_mesh_coal.bat
+scripts\build_mesh_collision_benchmark_msvc.bat
+scripts\run_mesh_collision_benchmark_msvc.bat
+```
+
 ## How To Pick Up Work
 
 Use `docs/robot_kinematics_implementation_plan.md`.
@@ -201,6 +222,7 @@ Good initial task order:
 11. Implement posture/ranking.
 12. Implement JSON loader and `Virtual6DofTestArm`.
 13. Implement primitive collision detection using `docs/collision_detection_plan.md`.
+14. Implement mesh collision backend using `docs/mesh_collision_backend_plan.md`.
 
 ## Definition Of Done
 
@@ -229,5 +251,5 @@ Canonical serial configs may contain fixed joints for adapter-generated link tra
 - Do not implement Kawasaki RS007N without source references.
 - Do not put robot-specific preset data inside generic solver code.
 - Do not expand to SCARA, delta, parallel, or analytic IK before the base milestone.
-- Do not use STL meshes or VTK for runtime core collision checking.
+- Do not expose third-party mesh collision library types in public APIs.
 - Do not treat primitive collision profiles as safety-rated physical geometry.

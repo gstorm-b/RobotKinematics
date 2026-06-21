@@ -906,6 +906,76 @@
              <number>12</number>
             </property>
             <item>
+             <widget class="QGroupBox" name="collisionBackendGroupBox">
+              <property name="title">
+               <string>Collision Backend</string>
+              </property>
+              <layout class="QFormLayout" name="collisionBackendFormLayout">
+               <item row="0" column="0">
+                <widget class="QLabel" name="collisionBackendLabel">
+                 <property name="text">
+                  <string>Mode</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QComboBox" name="collisionBackendComboBox"/>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="meshBackendAvailabilityLabel">
+                 <property name="text">
+                  <string>Mesh backend</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QLabel" name="meshBackendAvailabilityValueLabel">
+                 <property name="text">
+                  <string>Unknown</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="meshOriginalProfileLabel">
+                 <property name="text">
+                  <string>Mesh original profile</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QLabel" name="meshOriginalProfileValueLabel">
+                 <property name="text">
+                  <string>Not loaded</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="meshSimplifiedProfileLabel">
+                 <property name="text">
+                  <string>Mesh simplified profile</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QLabel" name="meshSimplifiedProfileValueLabel">
+                 <property name="text">
+                  <string>Not loaded</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
              <widget class="QGroupBox" name="collisionProfileGroupBox">
               <property name="title">
                <string>Primitive Collision Profile</string>
@@ -955,16 +1025,26 @@
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="showPrimitiveShapesCheckBox">
+             <widget class="QCheckBox" name="enableCollisionCheckBox">
               <property name="text">
-               <string>Show primitive collision shapes in scene</string>
+               <string>Enable collision check</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="showCollisionShapesCheckBox">
+              <property name="text">
+               <string>Show collision shapes for selected backend</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QLabel" name="collisionProfileNoteLabel">
               <property name="text">
-               <string>Collision truth comes from conservative primitives, not STL meshes.</string>
+               <string>Collision truth comes from the selected RobotKinematics backend (primitive or mesh). VTK is only used for rendering and never as the collision oracle.</string>
               </property>
               <property name="wordWrap">
                <bool>true</bool>

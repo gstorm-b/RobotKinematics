@@ -11,6 +11,8 @@ INCLUDEPATH += \
     $$PWD/../include \
     $$PWD/../third_party/eigen
 
+include(../mesh_collision_backend.pri)
+
 LIBS += -L$$OUT_PWD/../lib -lRobotKinematics
 
 DESTDIR = $$OUT_PWD
@@ -33,9 +35,11 @@ SOURCES += \
     unit/Robot3DVisualizerLogicTests.cpp \
     unit/IKApiTests.cpp \
     unit/CollisionApiTests.cpp \
+    unit/CollisionBackendTests.cpp \
     unit/CollisionProfileValidatorTests.cpp \
     unit/CollisionCheckerTests.cpp \
     unit/CollisionPrimitiveDistanceTests.cpp \
+    unit/StlMeshLoaderTests.cpp \
     unit/StlPrimitiveAuthoringHelperTests.cpp \
     unit/IKSolutionRankerTests.cpp \
     unit/NumericalIKSolverTests.cpp \
@@ -44,6 +48,8 @@ SOURCES += \
     unit/UrdfAdapterTests.cpp \
     integration/CustomPresetTests.cpp \
     integration/CollisionProfileJsonTests.cpp \
+    integration/MeshCollisionProfileJsonTests.cpp \
+    integration/NachiMeshCollisionTests.cpp \
     integration/FrameToolFkTests.cpp \
     integration/IKIntegrationTests.cpp \
     integration/Virtual6DofTestArmTests.cpp \
@@ -62,9 +68,11 @@ HEADERS += \
     unit/Robot3DVisualizerLogicTests.h \
     unit/IKApiTests.h \
     unit/CollisionApiTests.h \
+    unit/CollisionBackendTests.h \
     unit/CollisionProfileValidatorTests.h \
     unit/CollisionCheckerTests.h \
     unit/CollisionPrimitiveDistanceTests.h \
+    unit/StlMeshLoaderTests.h \
     unit/StlPrimitiveAuthoringHelperTests.h \
     unit/IKSolutionRankerTests.h \
     unit/NumericalIKSolverTests.h \
@@ -73,6 +81,8 @@ HEADERS += \
     unit/UrdfAdapterTests.h \
     integration/CustomPresetTests.h \
     integration/CollisionProfileJsonTests.h \
+    integration/MeshCollisionProfileJsonTests.h \
+    integration/NachiMeshCollisionTests.h \
     integration/FrameToolFkTests.h \
     integration/IKIntegrationTests.h \
     integration/Virtual6DofTestArmTests.h \

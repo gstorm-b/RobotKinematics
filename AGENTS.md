@@ -11,7 +11,8 @@ Before editing code or docs, read these files:
 3. `docs/robot_kinematics_implementation_plan.md`
 4. `docs/robot_preset_json_schema.md`
 5. `docs/collision_detection_plan.md` when working on collision detection
-6. `docs/developer_onboarding.md`
+6. `docs/mesh_collision_backend_plan.md` when working on mesh collision
+7. `docs/developer_onboarding.md`
 
 Do not infer missing project decisions from general robotics conventions when the spec already defines a decision.
 
@@ -19,7 +20,9 @@ Do not infer missing project decisions from general robotics conventions when th
 
 The base serial 6DOF implementation is largely complete. The repository has a Qt/qmake static library, Qt Test runner, units, `Pose`, canonical serial model, validation, joint limits, frame/tool registries, FK, numerical IK, posture-aware ranking, JSON preset loading, `Virtual6DofTestArm`, Nachi MZ04D, DH/URDF adapters, and a hybrid analytic IK plugin for supported spherical-wrist 6R robots.
 
-Primitive self-collision detection is approved as the next extension, but it must follow `docs/collision_detection_plan.md`: primitive runtime shapes first, STL only as an authoring-helper input, and no VTK dependency in core.
+Primitive self-collision detection is implemented as a fast approximate/debug path. Phase 10 mesh-collision scaffolding now includes backend-neutral public types, mesh-profile load/validation, STL normalization (with degenerate-triangle filtering on the production path), a default unsupported mesh-backend path, and an optional Coal adapter behind qmake flags. The Nachi MZ04D mesh profile is committed at `collision_profiles/nachi_mz04d_mesh_collision.json`. An offline voxel-grid mesh-simplification tool lives at `tools/mesh_simplification/`; generated simplified profiles and STLs under `collision_profiles/simplified/` and `collision_profiles/*_simplified*.json` are gitignored. The Robot3DVizualize example exposes a Collision Backend selector (Primitive / Mesh - Original / Mesh - Simplified) and can be built against the Coal-enabled library via `scripts/build_example_robot3dvisualize_mesh_coal_msvc.bat`. RobotKinematics owns the public API, and third-party mesh collision libraries stay behind internal adapters per `docs/mesh_collision_backend_plan.md`.
+
+For mesh profiles, relative STL paths loaded with `MeshCollisionProfileJsonLoader::loadFile(path)` resolve against the mesh-profile JSON directory. `loadJson(json)` preserves authored paths. Mesh numeric fields must be JSON numbers, not strings. Do not stage local optional dependency checkouts or install roots from `third_party/assimp`, `third_party/boost`, `third_party/coal`, `third_party/fcl`, `third_party/libccd`, or `third_party/install`; keep `third_party/eigen` as the tracked vendored dependency.
 
 Task 6.1, Kawasaki RS007N, remains blocked until the user provides verified dimensions, joint limits, posture rules, and source references. Do not invent Kawasaki data.
 
@@ -37,6 +40,7 @@ Follow `docs/robot_kinematics_implementation_plan.md` in dependency order:
 8. Phase 7: DH/URDF adapters.
 9. Phase 8: analytic IK plugin.
 10. Phase 9: primitive self-collision detection.
+11. Phase 10: mesh collision backend.
 
 Do not expand into new robot families or Kawasaki RS007N before the required source data exists unless the user explicitly changes scope.
 
@@ -52,8 +56,9 @@ Do not expand into new robot families or Kawasaki RS007N before the required sou
 - Numerical `solveAll` returns solutions found by the selected solver, not mathematically exhaustive solutions.
 - Real robot preset source references must be preserved.
 - Preset data must not be mixed into solver logic.
-- Runtime collision checking must use primitive profiles, not STL triangle meshes.
-- STL-to-primitive helpers are authoring tools only and must not become core runtime dependencies.
+- Primitive collision remains available as fallback/debug.
+- Accurate mesh collision must keep third-party backend types out of public headers.
+- STL-derived mesh collision assets must declare source units, scale to meters, and explicit `meshToLink` transforms.
 
 ## Required Status Enum
 
@@ -96,6 +101,7 @@ Every implementation task must include relevant tests. At minimum:
 - Posture resolver behavior.
 - Preset JSON loading and C++ fallback equivalence.
 - Collision profile validation and primitive distance checks when working on Phase 9.
+- Mesh profile validation, STL unit scaling, backend availability, and mesh collision fixtures when working on Phase 10.
 
 Accuracy targets for normal non-singular fixtures:
 

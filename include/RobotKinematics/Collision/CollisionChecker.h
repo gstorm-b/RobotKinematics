@@ -5,6 +5,7 @@
 #include <RobotKinematics/Core/Result.h>
 #include <RobotKinematics/Model/RobotModelConfig.h>
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -23,6 +24,7 @@ struct CollisionPairResult {
     std::string linkB;
     bool colliding = false;
     double distance_m = 0.0;
+    std::size_t contactCount = 0;
 };
 
 struct CollisionCheckResult {

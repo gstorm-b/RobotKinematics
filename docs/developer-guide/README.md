@@ -15,10 +15,11 @@ RobotKinematics is a C++17 / Eigen backend for serial industrial-robot kinematic
 - joint-vector and joint-limit validation;
 - frame and tool registries;
 - robot presets (built-in C++ and `robot-kinematics-preset/v1` JSON);
-- adapters for standard DH input and URDF import/export.
+- adapters for standard DH input and URDF import/export;
+- primitive self-collision checks as a fast approximate/debug path.
 
-There is **no UI, no path planning, and no dynamics**. Primitive self-collision detection is planned
-as a lightweight extension; until that module lands, the shipped API is a kinematics math backend.
+There is **no UI, no path planning, and no dynamics**. Accurate mesh collision is planned as an
+optional backend extension; until that lands, collision coverage is limited by primitive profiles.
 
 ## Contents
 

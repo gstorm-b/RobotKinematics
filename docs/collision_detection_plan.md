@@ -8,6 +8,9 @@ The implementation must prioritize fast and lightweight self-collision checks. R
 checking uses primitive shapes, not STL triangle meshes. STL files may be used only by helper tools
 to derive or preview primitive collision volumes.
 
+Update: primitive collision has landed and remains the fast approximate/debug backend. Accurate
+STL-part coverage is now planned separately in `docs/mesh_collision_backend_plan.md`.
+
 ## Goals
 
 - Detect self-collision for a serial robot at a single joint state.

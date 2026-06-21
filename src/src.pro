@@ -10,6 +10,8 @@ INCLUDEPATH += \
     $$PWD/../include \
     $$PWD/../third_party/eigen
 
+include(../mesh_collision_backend.pri)
+
 DESTDIR = $$OUT_PWD/../lib
 OBJECTS_DIR = $$OUT_PWD/.obj
 MOC_DIR = $$OUT_PWD/.moc
@@ -19,10 +21,15 @@ UI_DIR = $$OUT_PWD/.ui
 SOURCES += \
     Adapters/DhAdapter.cpp \
     Adapters/UrdfAdapter.cpp \
+    Collision/CollisionBackend.cpp \
     Collision/BuiltInCollisionProfiles.cpp \
     Collision/CollisionChecker.cpp \
     Collision/CollisionProfileJsonLoader.cpp \
     Collision/CollisionProfileValidator.cpp \
+    Collision/MeshCollisionProfile.cpp \
+    Collision/MeshCollisionProfileJsonLoader.cpp \
+    Collision/MeshCollisionProfileValidator.cpp \
+    Collision/StlMeshLoader.cpp \
     Collision/StlPrimitiveAuthoringHelper.cpp \
     Core/LibraryAnchor.cpp \
     Core/Pose.cpp \
@@ -40,6 +47,10 @@ SOURCES += \
     Solvers/NumericalIKSolver.cpp \
     Solvers/Analytic6DofSphericalWristSolver.cpp
 
+contains(CONFIG, robotkinematics_mesh_collision):equals(MESH_COLLISION_BACKEND, coal) {
+    SOURCES += Collision/CoalMeshCollisionBackend.cpp
+}
+
 HEADERS += \
     ../include/RobotKinematics/Adapters/DhAdapter.h \
     ../include/RobotKinematics/Adapters/UrdfAdapter.h \
@@ -48,13 +59,19 @@ HEADERS += \
     ../include/RobotKinematics/Core/Pose.h \
     ../include/RobotKinematics/Core/Result.h \
     ../include/RobotKinematics/Core/Units.h \
+    ../include/RobotKinematics/Collision/CollisionBackend.h \
     ../include/RobotKinematics/Collision/CollisionChecker.h \
     ../include/RobotKinematics/Collision/CollisionGeometry.h \
     ../include/RobotKinematics/Collision/CollisionProfile.h \
     ../include/RobotKinematics/Collision/BuiltInCollisionProfiles.h \
     ../include/RobotKinematics/Collision/CollisionProfileJsonLoader.h \
     ../include/RobotKinematics/Collision/CollisionProfileValidator.h \
+    ../include/RobotKinematics/Collision/MeshCollisionProfile.h \
+    ../include/RobotKinematics/Collision/MeshCollisionProfileJsonLoader.h \
+    ../include/RobotKinematics/Collision/MeshCollisionProfileValidator.h \
+    ../include/RobotKinematics/Collision/StlMeshLoader.h \
     ../include/RobotKinematics/Collision/StlPrimitiveAuthoringHelper.h \
+    ../include/RobotKinematics/Collision/TriangleMesh.h \
     ../include/RobotKinematics/Kinematics/ForwardKinematics.h \
     ../include/RobotKinematics/Kinematics/InverseKinematics.h \
     ../include/RobotKinematics/Kinematics/JointLimitValidator.h \
