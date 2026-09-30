@@ -3,7 +3,6 @@
 /_build*/
 /lib/
 /examples/*/build/
-/agent-skills
 
 # --- qmake / make generated files (in-source) ---
 Makefile
@@ -46,6 +45,7 @@ ui_*.h
 
 # --- Local agent/editor config ---
 /.claude/
+/.agents/
 
 # --- Generated mesh-simplification artifacts ---
 # tools/mesh_simplification regenerates these from the original mesh profile.
