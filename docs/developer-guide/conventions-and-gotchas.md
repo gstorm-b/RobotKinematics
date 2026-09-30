@@ -28,7 +28,7 @@ i.e. fixed-axis X-Y-Z (equivalently intrinsic Z-Y'-X''). `roll` is about X, `pit
 ### Gotcha: vendor pendants may list the angles Z-first
 
 A robot controller's "RX, RY, RZ" readout is **not guaranteed** to be `(roll, pitch, yaw)` in
-that order. The Nachi MZ04D teach pendant, for example, lists orientation **Z-first** —
+that order. The Nachi teach pendants (MZ04D, MZ07F), for example, list orientation **Z-first** —
 `(yaw_Z, pitch_Y, roll_X)`. To build the right `Pose` from such a triple `(o1, o2, o3)`:
 
 ```cpp
@@ -40,6 +40,20 @@ Getting this wrong is insidious: **position will match while orientation silentl
 When you onboard a new robot from pendant data, verify the orientation mapping against a few
 measured poses before trusting it. See
 [../preset_references/nachi-mz04d.md](../preset_references/nachi-mz04d.md) for a worked example.
+
+### Gotcha: vendor manual joint limits may use a different joint zero
+
+Joint limits must be expressed in the same joint convention as the preset, which for the Nachi
+presets is the teach pendant's (every fixture joint value is a pendant reading). The Nachi MZ04D
+manual lists J2 (-145, 90) and J3 (-125, 280), but the pendant accepts J2 (-55, 180) and
+J3 (-70, 190): J2 is offset by 90 deg and J3 uses a different definition. The presets therefore use
+the pendant limits. See [../preset_references/nachi-mz04d.md](../preset_references/nachi-mz04d.md).
+
+### Gotcha: mesh assets are not all authored in millimeters
+
+STL files carry no unit. The MZ04 STLs are millimeters (`sourceUnits: "mm"`, `scaleToMeters: 0.001`)
+while the MZ07F STLs are meters (`sourceUnits: "m"`, `scaleToMeters: 1.0`). Always read the unit
+from the mesh profile instead of assuming one, and keep `meshToLink` explicit.
 
 ## The canonical model is the source of truth
 
@@ -97,8 +111,8 @@ does not throw for these. Check `.ok()` and read `.status` / `.message` on failu
 
 This is a kinematics math backend; it makes **no physical-accuracy claim** about any real robot.
 Preset accuracy is only as good as the source data. The `NachiMZ04D` preset reproduces its
-reference measurements to ≈0.04 mm / 0.01°, but that is a fit to teach-pendant data, not a
-calibration guarantee. Numerical IK accuracy targets are `≤ 1e-6 m` position and
+reference measurements to ≈0.04 mm / 0.01° and `NachiMZ07F` its six reference poses to
+≈0.07 mm / 0.013°, but those are fits to teach-pendant data, not a calibration guarantee. Numerical IK accuracy targets are `≤ 1e-6 m` position and
 `≤ 1.7453e-5 rad` (~0.001°) orientation for normal, non-singular configurations.
 
 Joint-vector round-trip checks are stricter than pose orientation residual checks: use

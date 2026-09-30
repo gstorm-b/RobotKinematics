@@ -12,5 +12,5 @@ its own `build/` folder.
 
 ## Visual Example
 
-- [Robot3DVizualize](Robot3DVizualize/README.md): Qt 6 + VTK 3D viewer for Nachi MZ04D with
+- [Robot3DVizualize](Robot3DVizualize/README.md): Qt 6 + VTK 3D viewer for Nachi MZ04D and MZ07F with
   primitive and optional mesh collision backend modes.

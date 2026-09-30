@@ -100,6 +100,7 @@ return `Result<ArmPosture>`.
 
 - `Presets::virtual6DofTestArm()` — `Presets/Virtual6DofTestArm.h`
 - `Presets::nachiMZ04D()` — `Presets/NachiMZ04D.h`
+- `Presets::nachiMZ07F()` — `Presets/NachiMZ07F.h`
 - `PresetJsonLoader::loadFile(path)` / `loadJson(json)` → `Result<SerialRobotConfig>` —
   `Presets/PresetJsonLoader.h`
 

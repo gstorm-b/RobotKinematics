@@ -13,6 +13,7 @@
 #include <RobotKinematics/Posture/PostureResolver.h>
 #include <RobotKinematics/Presets/NachiMZ07F.h>
 #include <RobotKinematics/Presets/PresetJsonLoader.h>
+#include <RobotKinematics/Solvers/Analytic6DofSphericalWristSolver.h>
 
 #include <QFile>
 #include <QString>
@@ -217,6 +218,14 @@ void NachiMZ07FTests::presetRunsFkAndSeededIkRoundTrip()
     const Pose solved = ForwardKinematics::flangePose(config, result.best().joints);
     QVERIFY((solved.translation_m() - target.translation_m()).norm() <= 1e-6);
     QVERIFY(solved.rotationQuaternion().angularDistance(target.rotationQuaternion()) <= 1.7453292519943296e-5);
+}
+
+void NachiMZ07FTests::analyticSolverRejectsShoulderOffsetModel()
+{
+    // The 50 mm J1/J2 shoulder offset means the J1 and J2 axes do not intersect, which is outside
+    // the analytic spherical-wrist plugin's supported morphology; IK must use the numerical solver.
+    const Analytic6DofSphericalWristSolver solver;
+    QVERIFY(!solver.supportsModel(Presets::nachiMZ07F()));
 }
 
 void NachiMZ07FTests::primitiveCollisionProfileIsValidAndClearAtReferencePoses()

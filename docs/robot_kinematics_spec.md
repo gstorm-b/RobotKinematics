@@ -6,7 +6,7 @@ Build a reusable C++ backend library for industrial robot kinematics.
 
 The primary users are developer engineers integrating robot guidance, bin picking, remote control, and similar robotics applications. The library must let engineers define or load a robot model, configure frames/tools, compute forward kinematics, solve inverse kinematics, validate joint limits, and choose IK results using seed/posture/options.
 
-Phase 1 focuses on serial 6DOF industrial robots. The first implementation preset is a self-designed virtual serial 6DOF robot used to validate the base architecture, JSON schema, FK, IK, frames/tools, joint limits, and posture behavior before real vendor preset data is available. Nachi MZ04D is now implemented from teach-pendant reference data. Kawasaki RS007N remains a real-preset validation target after its source data is provided. The architecture must remain extensible for SCARA, parallel/delta, 4DOF, 5DOF, and other robot families, but those robot types are not implementation scope for the first phase.
+Phase 1 focuses on serial 6DOF industrial robots. The first implementation preset is a self-designed virtual serial 6DOF robot used to validate the base architecture, JSON schema, FK, IK, frames/tools, joint limits, and posture behavior before real vendor preset data is available. Nachi MZ04D and MZ07F are now implemented from teach-pendant reference data. Kawasaki RS007N remains a real-preset validation target after its source data is provided. The architecture must remain extensible for SCARA, parallel/delta, 4DOF, 5DOF, and other robot families, but those robot types are not implementation scope for the first phase.
 
 ## Users
 
@@ -364,12 +364,14 @@ Phase 1 preset strategy:
 - `Virtual6DofTestArm`: required first implementation preset. This is a synthetic serial 6DOF robot designed by the project to exercise the canonical model, numerical IK, posture classification, frames/tools, JSON loading, and C++ fallback behavior.
 - `Kawasaki RS007N`: real-preset validation target after source data is provided.
 - `Nachi MZ04D`: implemented real-preset validation target from teach-pendant reference data.
+- `Nachi MZ07F`: implemented real preset from teach-pendant reference data and the vendor STEP
+  assembly (numerical IK because of its J1/J2 shoulder offset).
 
 Each preset must include enough data for FK, IK, joint limit validation, tool/frame behavior, and posture handling.
 
 For virtual presets, the source of truth is the project-owned preset spec and fixture tests. For real robot presets, the source of truth is vendor documentation, verified internal robot configuration, or measured teach-pendant reference data. Each real preset JSON must include source references for dimensions, joint limits, and posture definitions where available.
 
-Presets are stored as JSON files so developers can add or customize robots without recompiling the library. `Virtual6DofTestArm` and `NachiMZ04D` have built-in C++ fallbacks. Kawasaki RS007N should also have a built-in C++ fallback once its real preset data is added.
+Presets are stored as JSON files so developers can add or customize robots without recompiling the library. `Virtual6DofTestArm`, `NachiMZ04D`, and `NachiMZ07F` have built-in C++ fallbacks. Kawasaki RS007N should also have a built-in C++ fallback once its real preset data is added.
 
 `Virtual6DofTestArm` requirements:
 
@@ -598,6 +600,7 @@ include/
       Virtual6DofTestArm.h
       KawasakiRS007N.h
       NachiMZ04D.h
+      NachiMZ07F.h
     Adapters/
       UrdfAdapter.h
       DhAdapter.h
@@ -674,6 +677,7 @@ Conventions:
 - Virtual6DofTestArm preset FK/IK round-trip.
 - Kawasaki RS007N preset FK/IK round-trip after source data is provided.
 - Nachi MZ04D preset FK/IK round-trip.
+- Nachi MZ07F preset FK/IK round-trip.
 - Custom serial 6DOF preset can be built and solved.
 - `solve` selects the closest solution to seed/previous joint.
 - `solveAll` returns multiple found solutions when configured with multiple seeds.

@@ -15,7 +15,7 @@ It lets developer engineers:
 - choose IK solutions using seed, previous joint state, posture, and options.
 
 The base milestone is implemented and verified with a project-owned virtual serial 6DOF robot named
-`Virtual6DofTestArm`; the current repo also includes the Nachi MZ04D preset and collision examples.
+`Virtual6DofTestArm`; the current repo also includes the Nachi MZ04D and MZ07F presets and collision examples.
 
 ## What To Read First
 
@@ -43,7 +43,7 @@ Base code milestone:
 - Built-in C++ fallback preset.
 - `Virtual6DofTestArm` integration tests.
 
-`NachiMZ04D` has since been implemented from teach-pendant reference data. `KawasakiRS007N` remains blocked until verified source data is provided; see `docs/preset_references/kawasaki-rs007n.md`.
+`NachiMZ04D` and `NachiMZ07F` have since been implemented from teach-pendant reference data. `KawasakiRS007N` remains blocked until verified source data is provided; see `docs/preset_references/kawasaki-rs007n.md`.
 
 Current implementation status:
 
@@ -54,7 +54,7 @@ Current implementation status:
 - Phase 3 exists for IK API types, adaptive damped least-squares numerical IK, and `SerialRobotKinematics::solve/solveAll` orchestration.
 - Phase 4 exists for generic posture metadata, a metadata-gated serial 6DOF posture resolver, posture-derived seed expansion, and posture-aware IK scoring/rejection.
 - Phase 5 exists for custom config building, preset JSON loading, and `Virtual6DofTestArm` as both JSON and built-in C++ fallback.
-- Phase 6 real presets: Nachi MZ04D is implemented from teach-pendant data; Kawasaki RS007N remains blocked until verified source data is provided.
+- Phase 6 real presets: Nachi MZ04D and MZ07F are implemented from teach-pendant data; Kawasaki RS007N remains blocked until verified source data is provided.
 - Phase 7 exists for standard DH import to canonical config and URDF-like export/import. Modified DH remains a later adapter extension.
 - Phase 8 analytic IK capability detection and spherical-wrist analytic IK are implemented for supported morphologies.
 - Phase 9 primitive self-collision detection is implemented as a fast approximate/debug path.
@@ -119,7 +119,7 @@ Preset files use JSON schema `robot-kinematics-preset/v1`.
 
 The first preset is `Virtual6DofTestArm`. It exists to validate library behavior before real vendor data is available.
 
-Nachi MZ04D is available as a real preset. Kawasaki RS007N should be added only after source dimensions, joint limits, and posture rules are provided.
+Nachi MZ04D and MZ07F are available as real presets. Kawasaki RS007N should be added only after source dimensions, joint limits, and posture rules are provided.
 
 ### Collision
 
@@ -166,6 +166,8 @@ src/
 
 presets/
   virtual_6dof_test_arm.json
+  Nachi/MZ04/     MZ04D preset, STL assets, primitive + mesh collision profiles
+  Nachi/MZ07F/    MZ07F preset, STL/STEP assets, primitive + mesh collision profiles
 
 tests/
   unit/
@@ -179,6 +181,9 @@ examples/
 ```
 
 ## Build And Test
+
+First create `qmake/local_paths.pri` from `qmake/local_paths.pri.example` and set the
+dependency paths for your machine.
 
 Expected MSVC flow:
 
@@ -216,8 +221,8 @@ Build output convention:
 - example builds live under the example folder, e.g. `examples/Robot3DVizualize/build/msvc`;
 - third-party dependencies live outside the repository; their paths are declared only in
   `qmake/local_paths.pri` (precedence: qmake command line > environment > that file);
-- Nachi MZ04D preset, STL assets, primitive profile, and mesh profile live together under
-  `presets/Nachi/MZ04`.
+- each Nachi preset's JSON, STL assets, primitive profile, and mesh profile live together under
+  `presets/Nachi/MZ04` and `presets/Nachi/MZ07F`.
 
 The repository does not build these packages. Their prebuilt installs under `C:\build_packages` are
 consumed read-only; rebuilding them is managed outside this repository so a project script can never

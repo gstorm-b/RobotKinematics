@@ -63,7 +63,7 @@ As of the latest Phase 10 implementation slice:
   (worst case, available via `safety_factor=2.0`). This avoids a false positive between
   `j5_mesh` and `centering_tool_mesh` at Home/Midpoint where the original Nachi visual STLs
   sit only ~3 mm apart. Generated artifacts are gitignored under
-  `presets/Nachi/MZ04/simplified/` and `presets/Nachi/MZ04/*_simplified*.json`.
+  `presets/Nachi/*/simplified/` and `presets/Nachi/*/*_simplified*.json`.
 - Phase 10.8 adds a Collision Backend selector group to the Robot3DVizualize example. The
   combo box lists Primitive / Mesh - Original STL / Mesh - Simplified STL (mesh entries only
   appear when the mesh backend is compiled in and the relevant profile validates). Mesh
@@ -84,6 +84,10 @@ As of the latest Phase 10 implementation slice:
   resolved against the profile directory, mesh-profile numeric fields are strictly validated, Coal
   safety-margin behavior is covered by test, and optional third-party dependencies now come from
   prebuilt installs under `C:\build_packages` (the repository-local `third_party/` was retired).
+- Nachi MZ07F has an original mesh profile too (meter STLs, `meshToLink` derived from the
+  `MZ07F.step` assembly; see `docs/preset_references/nachi-mz07f.md`). The simplification tool
+  runs on it via `scripts/run_mesh_simplification_nachi_msvc.bat 10 0.4 MZ07F`, and the
+  Robot3DVizualize example switches robots with its Robot model selector.
 
 ## Non-Goals
 

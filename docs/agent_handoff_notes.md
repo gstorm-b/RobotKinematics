@@ -25,3 +25,29 @@
 - `SerialRobotKinematics::run` is now hybrid: analytic when `supportsModel` and it returns a solution, else numerical fallback. Virtual6DofTestArm is non-spherical → numerical (covered by tests). NOTE: MZ04D `solve`/`solveAll` now route through the analytic solver.
 - All 20 test suites pass under MSVC (`build_cli` shadow build; run exe from project root).
 - Build note: built/ran via `build_cli/` (fresh qmake+jom shadow build); run the test exe from the project root so `presets/...` resolves. The Qt Creator `build/` dir is untouched.
+
+## 2026-09-30 Dependency Paths, MZ04D Pendant Limits, Nachi MZ07F (Task 6.3)
+
+- Third-party workspace retired: `third_party/` and the `scripts/build_third_party_*_msvc.bat`
+  scripts were removed. Every dependency path (Eigen, Coal/Boost/Assimp, VTK) is declared once in the
+  git-ignored `qmake/local_paths.pri` (template `qmake/local_paths.pri.example`) and resolved by
+  `qmake/dependency_paths.pri` with precedence qmake command line > environment > file. Prebuilt
+  packages live under `C:/build_packages` and are consumed read-only.
+- Eigen is now PCL 1.15.1's Eigen 3.4.0 (the Eigen the prebuilt Coal was built with). Eigen 3.4 lacks
+  `canonicalEulerAngles`, so the example and `tools/mesh_simplification` use a local
+  `canonicalEulerZyx_rad` helper with identical results.
+- `qmake/runtime_env.pri` writes `robotkinematics_runtime_env.bat` per build dir and exports the DLL
+  directories as `-L` paths so Qt Creator runs (with "Add build library search path to PATH") find
+  `coal.dll`.
+- Nachi MZ04D: joint limits switched from the manual values to the teach-pendant values
+  (J2 -55..180, J3 -70..190); user frames are now `robot_frame` and `ceiling_frame`; the `pointer`
+  tool offset is zero. Pinned by `NachiMZ04DTests::jointLimitsFollowTeachPendantNotManual`.
+- Nachi MZ07F (Task 6.3): preset, JSON, STL/STEP assets, primitive and mesh profiles under
+  `presets/Nachi/MZ07F`. Mesh `meshToLink` transforms are derived from the `MZ07F.step` assembly and
+  were visually confirmed by the user in Robot3DVizualize. IK is numerical (50 mm shoulder offset).
+  Posture labels are assumed from MZ04D.
+- Robot3DVizualize: robot model selector and `--robot MZ07F`; mesh modes need the Coal-enabled build
+  (Qt Creator: the `build/msvc_mesh_coal` configuration).
+- Verified: MSVC default and Coal builds 32/32 suites, all examples/tools build.
+- Known: MZ07F opens with a zoomed/bottom-up initial camera; the MZ07F folder is ~89 MB of ASCII STL
+  and the `*_low.stl` files are unused.

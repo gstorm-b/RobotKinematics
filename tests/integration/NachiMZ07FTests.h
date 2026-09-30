@@ -12,6 +12,7 @@ private slots:
     void forwardKinematicsMatchesTeachPendantPoses();
     void postureClassificationUsesNachiLabels();
     void presetRunsFkAndSeededIkRoundTrip();
+    void analyticSolverRejectsShoulderOffsetModel();
     void primitiveCollisionProfileIsValidAndClearAtReferencePoses();
     void meshCollisionProfileLoadsMeterStlAssets();
     void meshToLinkReproducesStepAssemblyPlacement();

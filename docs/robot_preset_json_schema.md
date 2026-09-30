@@ -300,7 +300,9 @@ Mesh collision profile files use schema id `robot-kinematics-collision-mesh/v1`.
 
 The mesh profile is separate from both the robot preset and the primitive collision profile. Mesh
 profiles must explicitly declare source units, scale to meters, and the transform from mesh-local
-coordinates into the canonical link frame.
+coordinates into the canonical link frame. `sourceUnits` is `"mm"` or `"m"`; set `scaleToMeters` to
+match it (`0.001` for the millimeter MZ04 STLs, `1.0` for the meter MZ07F STLs). The validator only
+requires `scaleToMeters` to be positive, so a unit/scale mismatch is not caught automatically.
 
 Minimum shape:
 

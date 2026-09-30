@@ -33,6 +33,9 @@ const SerialRobotConfig virtual6 = Presets::virtual6DofTestArm();
 `Virtual6DofTestArm` is a synthetic robot for testing; `NachiMZ04D` is a real arm whose
 kinematics/limits/posture were derived from teach-pendant data (see
 [../preset_references/nachi-mz04d.md](../preset_references/nachi-mz04d.md)).
+`NachiMZ07F` (`#include <RobotKinematics/Presets/NachiMZ07F.h>`, `Presets::nachiMZ07F()`) is a
+second real arm, documented in
+[../preset_references/nachi-mz07f.md](../preset_references/nachi-mz07f.md).
 
 ### 1b. A JSON preset (`robot-kinematics-preset/v1`)
 
@@ -152,7 +155,8 @@ for (const IKSolution& s : all.solutions) {
 **Which solver runs?** `SerialRobotKinematics` is hybrid. If the model is a supported
 spherical-wrist articulated arm (e.g. `NachiMZ04D`), a **closed-form analytic** solver runs and
 returns exact discrete branches. Otherwise it falls back to the **adaptive damped least-squares
-numerical** solver. This is automatic — you call the same `solve`/`solveAll` either way. See
+numerical** solver (e.g. `NachiMZ07F`, whose 50 mm J1/J2 shoulder offset is outside the analytic
+plugin's supported morphology). This is automatic — you call the same `solve`/`solveAll` either way. See
 [ADR-0004](decisions/adr-0004-hybrid-analytic-numerical-ik.md). Note the numerical `solveAll` is
 *found solutions*, not a mathematically exhaustive set (see
 [conventions-and-gotchas.md](conventions-and-gotchas.md)).

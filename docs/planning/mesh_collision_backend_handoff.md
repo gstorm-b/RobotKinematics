@@ -49,7 +49,7 @@ Read these files before implementation:
 
 ## First Task
 
-Start by reading [docs/planning/mesh_collision_backend_spike.md](/D:/Project/RobotKinematics/docs/planning/mesh_collision_backend_spike.md).
+Start by reading [docs/planning/mesh_collision_backend_spike.md](mesh_collision_backend_spike.md).
 
 Phases 10.1-10.8 are implemented. The remaining follow-up for the next agent is small but
 manual-visual-QA-heavy:
@@ -95,9 +95,9 @@ explicitly approves a core VTK dependency.
 `docs/planning/mesh_collision_backend_spike.md` now exists and should be kept current with any new Coal/FCL
 evidence. The current VTK baseline tool is:
 
-- [tools/mesh_collision_spike/main.cpp](/D:/Project/RobotKinematics/tools/mesh_collision_spike/main.cpp)
-- [tools/mesh_collision_spike/mesh_collision_spike.pro](/D:/Project/RobotKinematics/tools/mesh_collision_spike/mesh_collision_spike.pro)
-- [scripts/build_mesh_collision_spike_msvc.bat](/D:/Project/RobotKinematics/scripts/build_mesh_collision_spike_msvc.bat)
+- [tools/mesh_collision_spike/main.cpp](../../tools/mesh_collision_spike/main.cpp)
+- [tools/mesh_collision_spike/mesh_collision_spike.pro](../../tools/mesh_collision_spike/mesh_collision_spike.pro)
+- [scripts/build_mesh_collision_spike_msvc.bat](../../scripts/build_mesh_collision_spike_msvc.bat)
 
 The dependency report template remains:
 
@@ -156,8 +156,8 @@ Installed roots currently used on this workstation (set as `COAL_ROOT`/`BOOST_RO
 
 FCL and libccd are not installed there; they are not needed by Coal 3.x or any current target.
 The repository-local `third_party/` workspace has been retired. Generated simplified mesh outputs remain
-ignored separately under `presets/Nachi/MZ04/simplified/` and
-`presets/Nachi/MZ04/*_simplified*.json`.
+ignored separately under `presets/Nachi/*/simplified/` and
+`presets/Nachi/*/*_simplified*.json`.
 
 That closes the old "missing local dependency roots" blocker. The repo now has a tiny Coal runtime
 collision proof through the RobotKinematics test suite. A license snapshot is recorded in

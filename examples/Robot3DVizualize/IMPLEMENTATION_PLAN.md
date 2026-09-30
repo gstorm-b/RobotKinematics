@@ -61,7 +61,7 @@ Tasks:
 - [x] Add qmake VTK configuration in `vtk_config.pri`.
 - [x] Add a minimal Qt + VTK render-window smoke path.
 - [x] Add an MSVC build script for the example.
-- [x] Wire the local external VTK install path `D:\Project\vtk_build\vtk\install-x64-cuda-qt-vs` as the script default when `VTK_ROOT` is unset.
+- [x] Wire the local external VTK install path `D:\Project\vtk_build\vtk\install-x64-cuda-qt-vs` as the script default when `VTK_ROOT` is unset. (Superseded 2026-09-30: `VTK_ROOT` now comes from `qmake/local_paths.pri`; scripts no longer hard-code it.)
 - [x] Build the smoke app on a machine with VTK installed.
 - [x] Confirm required VTK modules for Qt embedding.
 - [x] Confirm whether the available VTK package can read STL directly.

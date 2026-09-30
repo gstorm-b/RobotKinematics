@@ -35,7 +35,7 @@ Runnable examples:
 
 - [../../examples/NachiMZ04Cli](../../examples/NachiMZ04Cli/README.md): built-in Nachi preset, FK, IK, and primitive collision.
 - [../../examples/CustomPresetCli](../../examples/CustomPresetCli/README.md): programmatic custom preset creation with FK/IK validation.
-- [../../examples/Robot3DVizualize](../../examples/Robot3DVizualize/README.md): Qt/VTK visualizer for Nachi MZ04D, including optional mesh collision modes.
+- [../../examples/Robot3DVizualize](../../examples/Robot3DVizualize/README.md): Qt/VTK visualizer for Nachi MZ04D and MZ07F, including optional mesh collision modes.
 
 ## Quick start
 
@@ -79,7 +79,7 @@ include/RobotKinematics/   Public headers (this is your include root)
   Solvers/                 Numerical + analytic IK solvers (used via SerialRobotKinematics)
   Collision/               Primitive and optional mesh collision APIs
   Posture/                 ArmPosture, PostureResolver
-  Presets/                 Virtual6DofTestArm, NachiMZ04D, PresetJsonLoader
+  Presets/                 Virtual6DofTestArm, NachiMZ04D, NachiMZ07F, PresetJsonLoader
   Adapters/                DhAdapter, UrdfAdapter
 src/                       Implementations (mirror of include/)
 presets/                   JSON presets (robot-kinematics-preset/v1)

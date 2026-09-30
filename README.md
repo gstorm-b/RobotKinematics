@@ -80,6 +80,17 @@ Canonical serial configs may contain fixed joints; `dof` counts movable joints o
 
 ## Build And Test
 
+First-time setup: third-party paths (Eigen, and optionally Coal/Boost/Assimp/VTK) are machine-local.
+Copy the template and edit the paths for your machine; qmake stops with a pointer to this file if
+a required path is missing:
+
+```powershell
+copy qmake\local_paths.pri.example qmake\local_paths.pri
+```
+
+See [docs/developer-guide/building-and-linking.md](docs/developer-guide/building-and-linking.md) for
+the variables and their precedence.
+
 From the repository root:
 
 ```powershell
