@@ -82,8 +82,8 @@ As of the latest Phase 10 implementation slice:
     (original distance `-1.7 mm`, simplified distance `+2.9 mm` flagged via padded margin).
 - Review fixes before Phase 10.6 are complete: relative mesh paths loaded from profile files are
   resolved against the profile directory, mesh-profile numeric fields are strictly validated, Coal
-  safety-margin behavior is covered by test, and optional third-party dependency sources/build
-  trees/install roots now live under `third_party/` for Windows 11 + MSVC reproducibility.
+  safety-margin behavior is covered by test, and optional third-party dependencies now come from
+  prebuilt installs under `C:\build_packages` (the repository-local `third_party/` was retired).
 
 ## Non-Goals
 
@@ -235,11 +235,11 @@ If the backend is unavailable:
 - the API should report `UnsupportedSolver` or a collision-specific `InvalidRequest` message for
   mesh requests when no mesh backend is compiled.
 
-Local dependency checkout/install directories used by the helper scripts are part of the tracked
-third-party workspace: sources live under `third_party/<name>`, Windows/MSVC build trees under
-`third_party/build/<name>`, and install roots under `third_party/install/<name>`. The supported
-third-party build environment is Windows 11 with MSVC/Visual Studio 2022 via
-`scripts/build_third_party_*_msvc.bat`.
+Dependencies are not stored in the repository. Install roots default to
+`C:\build_packages\<name>-<version>` (`BUILD_PACKAGES_ROOT`), with sources under
+`C:\build_packages\_src\<name>` and build trees under `C:\build_packages\_build\<name>`.
+Eigen comes from `EIGEN_INCLUDE_DIR` (see `eigen.pri`). The repository no longer ships scripts that
+build or install these packages; they are consumed read-only.
 
 ## Implementation Phases
 

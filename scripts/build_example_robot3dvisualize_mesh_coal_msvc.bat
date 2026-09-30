@@ -9,13 +9,13 @@ REM   - The Coal-enabled library already built via scripts\build_msvc_mesh_coal.
 REM ============================================================================
 setlocal
 
-if "%QT_MSVC_DIR%"=="" set "QT_MSVC_DIR=C:\Qt\6.8.2\msvc2022_64"
-if "%VCVARS%"=="" set "VCVARS=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
+if "%QT_MSVC_DIR%"=="" set "QT_MSVC_DIR=C:\Qt\6.11.1\msvc2022_64"
+if "%VCVARS%"=="" set "VCVARS=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat"
 if "%VTK_VERSION%"=="" set "VTK_VERSION=9.6"
 
 if "%VTK_ROOT%"=="" (
-    if exist "D:\Project\vtk_build\vtk\install-x64-cuda-qt-vs" (
-        set "VTK_ROOT=D:\Project\vtk_build\vtk\install-x64-cuda-qt-vs"
+    if exist "C:\build_packages\vtk\install-x64-cuda-qt" (
+        set "VTK_ROOT=C:\build_packages\vtk\install-x64-cuda-qt"
     ) else (
         echo [ERROR] VTK_ROOT is not set.
         exit /b 1
@@ -23,9 +23,10 @@ if "%VTK_ROOT%"=="" (
 )
 
 set "ROOT=%~dp0.."
-if "%COAL_ROOT%"=="" set "COAL_ROOT=%ROOT%\third_party\install\coal"
-if "%ASSIMP_ROOT%"=="" set "ASSIMP_ROOT=%ROOT%\third_party\install\assimp"
-if "%BOOST_ROOT%"=="" set "BOOST_ROOT=%ROOT%\third_party\install\boost"
+if "%BUILD_PACKAGES_ROOT%"=="" set "BUILD_PACKAGES_ROOT=C:\build_packages"
+if "%COAL_ROOT%"=="" set "COAL_ROOT=%BUILD_PACKAGES_ROOT%\coal-3.0.3"
+if "%ASSIMP_ROOT%"=="" set "ASSIMP_ROOT=%BUILD_PACKAGES_ROOT%\assimp-6.0.5"
+if "%BOOST_ROOT%"=="" set "BOOST_ROOT=%BUILD_PACKAGES_ROOT%\boost-1.87.0"
 
 set "LIB_BUILD=%ROOT%\build\msvc_mesh_coal"
 if not exist "%LIB_BUILD%\lib\RobotKinematics.lib" (

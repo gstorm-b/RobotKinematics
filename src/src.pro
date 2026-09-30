@@ -7,8 +7,9 @@ QT -= gui
 CONFIG += staticlib c++17 warn_on
 
 INCLUDEPATH += \
-    $$PWD/../include \
-    $$PWD/../third_party/eigen
+    $$PWD/../include
+
+include(../eigen.pri)
 
 include(../mesh_collision_backend.pri)
 

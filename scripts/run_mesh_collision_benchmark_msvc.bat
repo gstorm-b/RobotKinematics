@@ -1,12 +1,13 @@
 @echo off
 setlocal
 
-if "%QT_MSVC_DIR%"=="" set "QT_MSVC_DIR=C:\Qt\6.8.2\msvc2022_64"
+if "%QT_MSVC_DIR%"=="" set "QT_MSVC_DIR=C:\Qt\6.11.1\msvc2022_64"
 
 set "ROOT=%~dp0.."
-if "%COAL_ROOT%"=="" set "COAL_ROOT=%ROOT%\third_party\install\coal"
-if "%ASSIMP_ROOT%"=="" set "ASSIMP_ROOT=%ROOT%\third_party\install\assimp"
-if "%BOOST_ROOT%"=="" set "BOOST_ROOT=%ROOT%\third_party\install\boost"
+if "%BUILD_PACKAGES_ROOT%"=="" set "BUILD_PACKAGES_ROOT=C:\build_packages"
+if "%COAL_ROOT%"=="" set "COAL_ROOT=%BUILD_PACKAGES_ROOT%\coal-3.0.3"
+if "%ASSIMP_ROOT%"=="" set "ASSIMP_ROOT=%BUILD_PACKAGES_ROOT%\assimp-6.0.5"
+if "%BOOST_ROOT%"=="" set "BOOST_ROOT=%BUILD_PACKAGES_ROOT%\boost-1.87.0"
 set "EXE=%ROOT%\build\tools\mesh_collision_benchmark\release\mesh_collision_benchmark.exe"
 
 if not exist "%EXE%" (

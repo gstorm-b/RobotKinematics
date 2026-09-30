@@ -8,8 +8,9 @@ CONFIG += c++17 warn_on
 include(vtk_config.pri)
 
 INCLUDEPATH += \
-    $$PWD/../../include \
-    $$PWD/../../third_party/eigen
+    $$PWD/../../include
+
+include($$PWD/../../eigen.pri)
 
 # ROBOTKINEMATICS_LIB_DIR selects which RobotKinematics build to link against. The
 # default targets the no-mesh-backend MSVC build. To exercise the mesh backend

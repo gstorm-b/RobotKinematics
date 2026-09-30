@@ -8,7 +8,7 @@ This page covers building it and linking it into your own application.
 | Dependency | How it is provided | Why |
 |---|---|---|
 | **Qt 6 Core** | External (you install it) | The library links `QtCore`; `PresetJsonLoader` uses Qt's JSON + file IO. |
-| **Eigen** | Bundled in `third_party/eigen` (header-only) | All linear algebra and the `Pose` transform type. |
+| **Eigen** | External, header-only. `eigen.pri` reads `EIGEN_INCLUDE_DIR` (default `C:/Program Files/PCL 1.15.1/3rdParty/Eigen3/include/eigen3`, Eigen 3.4.0) | All linear algebra and the `Pose` transform type. |
 | **C++17** | Compiler flag | Standard the library targets. |
 | **Qt Test** | External | Only needed to build/run the test suite, not to use the library. |
 
@@ -69,16 +69,22 @@ See each example README for the expected output and the manual qmake flow.
 
 ## Third-party mesh backend dependencies
 
-Optional mesh-backend dependencies are kept in the repository under `third_party/`:
+Optional mesh-backend dependencies are not stored in the repository. The scripts use prebuilt
+packages under `BUILD_PACKAGES_ROOT` (default `C:\build_packages`):
 
-- source checkouts: `third_party/<name>`;
-- Windows/MSVC build trees: `third_party/build/<name>`;
-- local install roots used by qmake scripts: `third_party/install/<name>`.
+| Package | Default install root | Override |
+|---|---|---|
+| Coal 3.0.3 | `C:\build_packages\coal-3.0.3` | `COAL_ROOT` |
+| Assimp 6.0.5 | `C:\build_packages\assimp-6.0.5` | `ASSIMP_ROOT` |
+| Boost 1.87.0 | `C:\build_packages\boost-1.87.0` | `BOOST_ROOT` |
 
-The `scripts/build_third_party_*_msvc.bat` scripts are the supported path for building these
-dependencies on Windows 11 with MSVC/Visual Studio 2022. Set `VCVARS` if Visual Studio is installed
-outside the default location. Set `QT_CMAKE` if Qt's bundled CMake is not at
-`C:\Qt\Tools\CMake_64\bin\cmake.exe`.
+The prebuilt Coal package was compiled against PCL 1.15.1's Eigen 3.4.0, which is why
+`eigen.pri` defaults to the same headers. FCL and libccd are not required by Coal 3.x or by
+any RobotKinematics target.
+
+The repository does not build these packages. Their prebuilt installs under `C:\build_packages` are
+consumed read-only; rebuilding them is managed outside this repository so a project script can never
+overwrite an existing install.
 
 ### Shadow (out-of-source) build
 
@@ -105,7 +111,7 @@ Point your `.pro` at the include roots and link the built static lib:
 ```pro
 INCLUDEPATH += \
     /path/to/RobotKinematics/include \
-    /path/to/RobotKinematics/third_party/eigen
+    /path/to/eigen3
 
 LIBS += -L/path/to/RobotKinematics/build/msvc/lib -lRobotKinematics
 
@@ -117,7 +123,7 @@ CONFIG += c++17
 
 There is no CMake project shipped, but linking is standard once the library is built:
 
-- **Include paths:** `include/` and `third_party/eigen/`.
+- **Include paths:** `include/` and your Eigen include directory (the one containing `Eigen/Core`).
 - **Link:** the built `RobotKinematics` static lib **and** `Qt6::Core`.
 - **Standard:** C++17.
 
@@ -130,7 +136,7 @@ add_executable(myapp main.cpp)
 target_compile_features(myapp PRIVATE cxx_std_17)
 target_include_directories(myapp PRIVATE
     /path/to/RobotKinematics/include
-    /path/to/RobotKinematics/third_party/eigen)
+    /path/to/eigen3)
 target_link_libraries(myapp PRIVATE
     /path/to/RobotKinematics/build/msvc/lib/RobotKinematics.lib
     Qt6::Core)

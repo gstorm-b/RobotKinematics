@@ -8,8 +8,9 @@ CONFIG += console c++17 warn_on
 CONFIG -= app_bundle
 
 INCLUDEPATH += \
-    $$PWD/../include \
-    $$PWD/../third_party/eigen
+    $$PWD/../include
+
+include(../eigen.pri)
 
 include(../mesh_collision_backend.pri)
 

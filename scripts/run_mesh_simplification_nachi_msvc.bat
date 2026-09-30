@@ -9,7 +9,7 @@ REM so MeshCollisionProfileJsonLoader resolves the relative paths consistently.
 REM ============================================================================
 setlocal
 
-if "%QT_MSVC_DIR%"=="" set "QT_MSVC_DIR=C:\Qt\6.8.2\msvc2022_64"
+if "%QT_MSVC_DIR%"=="" set "QT_MSVC_DIR=C:\Qt\6.11.1\msvc2022_64"
 
 set "ROOT=%~dp0.."
 set "TOOL_DIR=%ROOT%\build\tools\mesh_simplification"
@@ -26,7 +26,7 @@ set "PATH=%QT_MSVC_DIR%\bin;%PATH%"
 set "INPUT=%ROOT%\presets\Nachi\MZ04\nachi_mz04d_mesh_collision.json"
 set "OUTPUT=%ROOT%\presets\Nachi\MZ04\nachi_mz04d_mesh_collision_simplified.json"
 set "MESH_OUTPUT_DIR=%ROOT%\presets\Nachi\MZ04\simplified\nachi_mz04d"
-set "VOXEL_COUNT=20"
+set "VOXEL_COUNT=10"
 set "SAFETY_FACTOR=0.4"
 
 if not "%~1"=="" set "VOXEL_COUNT=%~1"

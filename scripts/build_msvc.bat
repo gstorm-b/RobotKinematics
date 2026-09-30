@@ -3,7 +3,8 @@ REM ============================================================================
 REM Incremental OUT-OF-SOURCE MSVC build for RobotKinematics.
 REM
 REM Handles the build traps:
-REM   - Eigen is vendored at third_party/eigen (no dependency on a system Eigen).
+REM   - Eigen headers come from EIGEN_INCLUDE_DIR (see eigen.pri; default is the
+REM     PCL 1.15.1 Eigen 3.4.0 install).
 REM   - Builds out-of-source so in-source artifacts never contaminate it.
 REM   - Does NOT redirect vcvars64 output (redirecting breaks its SDK setup).
 REM
@@ -11,12 +12,12 @@ REM This script builds only. Use test_msvc.bat to run tests, or rebuild_msvc.bat
 REM for a clean rebuild + test cycle.
 REM
 REM Override these via environment if your install differs:
-REM   QT_MSVC_DIR  (default C:\Qt\6.8.2\msvc2022_64)
-REM   VCVARS       (default VS 2022 Community vcvars64.bat)
+REM   QT_MSVC_DIR  (default C:\Qt\6.11.1\msvc2022_64)
+REM   VCVARS       (default VS 2022/18 Community vcvars64.bat)
 REM ============================================================================
 setlocal
-if "%QT_MSVC_DIR%"=="" set "QT_MSVC_DIR=C:\Qt\6.8.2\msvc2022_64"
-if "%VCVARS%"=="" set "VCVARS=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
+if "%QT_MSVC_DIR%"=="" set "QT_MSVC_DIR=C:\Qt\6.11.1\msvc2022_64"
+if "%VCVARS%"=="" set "VCVARS=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat"
 set "ROOT=%~dp0.."
 set "BUILD=%ROOT%\build\msvc"
 

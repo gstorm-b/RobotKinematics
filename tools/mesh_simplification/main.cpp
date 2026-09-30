@@ -224,6 +224,19 @@ bool writeBinaryStl(const TriangleMesh& mesh, const QString& path, QString& erro
     return true;
 }
 
+// Canonical ZYX Euler angles (yaw, pitch, roll) with pitch in [-pi/2, pi/2]. Mirrors
+// Eigen's MatrixBase::canonicalEulerAngles(2, 1, 0), which Eigen 3.4 does not provide.
+Eigen::Vector3d canonicalEulerZyx_rad(const Eigen::Matrix3d& rotation)
+{
+    const double yaw = std::atan2(rotation(1, 0), rotation(0, 0));
+    const double pitch = std::atan2(-rotation(2, 0), std::hypot(rotation(2, 2), rotation(2, 1)));
+    const double s = std::sin(yaw);
+    const double c = std::cos(yaw);
+    const double roll = std::atan2(s * rotation(0, 2) - c * rotation(1, 2),
+                                   c * rotation(1, 1) - s * rotation(0, 1));
+    return Eigen::Vector3d(yaw, pitch, roll);
+}
+
 QJsonArray vec3ToJson(const Eigen::Vector3d& value)
 {
     QJsonArray array;
@@ -237,7 +250,7 @@ QJsonObject poseToJson(const Pose& pose)
 {
     const Eigen::Isometry3d& iso = pose.isometry();
     const Eigen::Vector3d translation = iso.translation();
-    const Eigen::Vector3d eulerZyx = iso.linear().canonicalEulerAngles(2, 1, 0);
+    const Eigen::Vector3d eulerZyx = canonicalEulerZyx_rad(iso.linear());
     // Pose::fromXYZRPY_m_rad applies R = R_z(yaw) * R_y(pitch) * R_x(roll), so canonical
     // ZYX Euler returns (yaw, pitch, roll); rpy_rad in the schema is (roll, pitch, yaw).
     QJsonObject object;

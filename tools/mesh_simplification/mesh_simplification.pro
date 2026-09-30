@@ -8,8 +8,9 @@ TEMPLATE = app
 TARGET = mesh_simplification
 
 INCLUDEPATH += \
-    ../../include \
-    ../../third_party/eigen
+    ../../include
+
+include(../../eigen.pri)
 
 isEmpty(ROBOTKINEMATICS_LIB_DIR): ROBOTKINEMATICS_LIB_DIR = $$(ROBOTKINEMATICS_LIB_DIR)
 isEmpty(ROBOTKINEMATICS_LIB_DIR) {

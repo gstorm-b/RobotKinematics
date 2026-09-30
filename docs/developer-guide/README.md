@@ -83,7 +83,7 @@ include/RobotKinematics/   Public headers (this is your include root)
   Adapters/                DhAdapter, UrdfAdapter
 src/                       Implementations (mirror of include/)
 presets/                   JSON presets (robot-kinematics-preset/v1)
-third_party/eigen/         Bundled Eigen (header-only)
+eigen.pri                  Locates the external Eigen headers (EIGEN_INCLUDE_DIR)
 tests/                     Qt Test unit + integration suites
 ```
 

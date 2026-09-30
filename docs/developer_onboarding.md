@@ -138,8 +138,8 @@ mesh collision is available only when the optional Coal adapter is compiled; oth
 still return a structured unsupported result. Coal/FCL/VTK/Open3D/CGAL/libigl types must not leak
 into public headers. Mesh assets must declare source units, `scaleToMeters`, and explicit
 `meshToLink` transforms. Relative mesh paths loaded from mesh-profile files resolve against the
-profile JSON directory. Optional backend dependency sources, build trees, and install roots live
-under `third_party/` so the Windows 11 + MSVC environment can be reproduced from source.
+profile JSON directory. Optional backend dependencies (Coal, Assimp, Boost) come from prebuilt
+installs under `C:\build_packages`, and Eigen comes from `EIGEN_INCLUDE_DIR` (see `eigen.pri`).
 
 ## Source Layout
 
@@ -214,16 +214,15 @@ Build output convention:
 - core/library/test builds live under repository-root `build/` (`build/msvc`, `build/mingw`,
   `build/msvc_mesh_coal`, and `build/tools`);
 - example builds live under the example folder, e.g. `examples/Robot3DVizualize/build/msvc`;
-- optional third-party dependency sources, build trees, and install outputs live under
-  `third_party/` (`third_party/<name>`, `third_party/build/<name>`, and
-  `third_party/install/<name>`);
+- third-party dependencies live outside the repository: Coal/Assimp/Boost installs under
+  `BUILD_PACKAGES_ROOT` (default `C:\build_packages\<name>-<version>`), Eigen under
+  `EIGEN_INCLUDE_DIR` (default PCL 1.15.1's Eigen 3.4.0);
 - Nachi MZ04D preset, STL assets, primitive profile, and mesh profile live together under
   `presets/Nachi/MZ04`.
 
-Third-party dependency builds are currently documented and supported for Windows 11 with MSVC
-through the `scripts/build_third_party_*_msvc.bat` scripts. Run them from a Windows 11 machine with
-Visual Studio 2022 Build Tools/MSVC available through `VCVARS` and Qt's CMake available through
-`QT_CMAKE` when a script requires CMake.
+The repository does not build these packages. Their prebuilt installs under `C:\build_packages` are
+consumed read-only; rebuilding them is managed outside this repository so a project script can never
+overwrite an existing install.
 
 ## How To Pick Up Work
 

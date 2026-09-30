@@ -35,6 +35,34 @@ void Robot3DVisualizerLogicTests::convertsBetweenNachiPendantOrderAndPose()
     QVERIFY(nearlyEqual(display.rx_deg, 19.2647));
 }
 
+void Robot3DVisualizerLogicTests::extractsCanonicalZyxEulerAngles()
+{
+    // (yaw, pitch, roll) triples inside the canonical range: yaw/roll in (-pi, pi], pitch in (-pi/2, pi/2).
+    const Eigen::Vector3d cases[] = {
+        {0.0, 0.0, 0.0},
+        {0.4, -0.3, 1.2},
+        {2.9, 1.4, -2.7},
+        {-2.2, -1.5, 3.0},
+        {-kPi / 2.0, 0.7, kPi / 2.0},
+    };
+    for (const Eigen::Vector3d& expected : cases) {
+        const Pose pose = Pose::fromXYZRPY_m_rad(0.0, 0.0, 0.0, expected[2], expected[1], expected[0]);
+        const Eigen::Vector3d actual = Robot3DVisualizer::canonicalEulerZyx_rad(pose.isometry().linear());
+        QVERIFY(nearlyEqual(actual[0], expected[0]));
+        QVERIFY(nearlyEqual(actual[1], expected[1]));
+        QVERIFY(nearlyEqual(actual[2], expected[2]));
+    }
+
+    // At pitch = +/-pi/2 yaw and roll are coupled; the angles must still rebuild the same rotation.
+    for (const double pitch : {kPi / 2.0, -kPi / 2.0}) {
+        const Pose pose = Pose::fromXYZRPY_m_rad(0.0, 0.0, 0.0, 0.3, pitch, -0.8);
+        const Eigen::Vector3d angles = Robot3DVisualizer::canonicalEulerZyx_rad(pose.isometry().linear());
+        const Pose rebuilt = Pose::fromXYZRPY_m_rad(0.0, 0.0, 0.0, angles[2], angles[1], angles[0]);
+        QVERIFY(nearlyEqual(angles[1], pitch));
+        QVERIFY(rebuilt.isometry().linear().isApprox(pose.isometry().linear(), 1e-9));
+    }
+}
+
 void Robot3DVisualizerLogicTests::buildsMillimeterVisualDeltaMatrixFromHomePose()
 {
     const Pose home = Pose::identity();

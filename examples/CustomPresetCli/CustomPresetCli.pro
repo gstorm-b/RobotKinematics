@@ -10,7 +10,7 @@ TARGET = CustomPresetCli
 SOURCES += main.cpp
 
 INCLUDEPATH += $$PWD/../../include
-INCLUDEPATH += $$PWD/../../third_party/eigen
+include($$PWD/../../eigen.pri)
 
 isEmpty(ROBOTKINEMATICS_LIB_DIR) {
     ROBOTKINEMATICS_LIB_DIR = $$PWD/../../build/msvc/lib

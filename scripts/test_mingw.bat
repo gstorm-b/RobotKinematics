@@ -7,7 +7,7 @@ REM The test executable is launched from the repository root so preset paths suc
 REM as presets/Nachi/MZ04/nachi_mz04d.json resolve consistently.
 REM ============================================================================
 setlocal
-if "%QT_MINGW_DIR%"=="" set "QT_MINGW_DIR=C:\Qt\6.8.2\mingw_64"
+if "%QT_MINGW_DIR%"=="" set "QT_MINGW_DIR=C:\Qt\6.11.1\mingw_64"
 if "%MINGW_DIR%"=="" set "MINGW_DIR=C:\Qt\Tools\mingw1310_64"
 set "ROOT=%~dp0.."
 set "BUILD=%ROOT%\build\mingw"

@@ -8,8 +8,9 @@ TEMPLATE = app
 TARGET = mesh_collision_benchmark
 
 INCLUDEPATH += \
-    ../../include \
-    ../../third_party/eigen
+    ../../include
+
+include(../../eigen.pri)
 
 include(../../mesh_collision_backend.pri)
 

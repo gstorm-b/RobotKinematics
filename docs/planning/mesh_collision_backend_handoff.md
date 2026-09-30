@@ -87,8 +87,8 @@ explicitly approves a core VTK dependency.
 - Do not silently reuse Qt/VTK visual correction code as collision metadata.
 - Do not remove primitive collision; it remains fallback/debug.
 - Do not claim physical safety certification.
-- Optional dependency checkouts, Windows/MSVC build trees, and local installs are intentionally kept
-  under `third_party/` so agents can reproduce the mesh-backend environment.
+- Optional dependencies are not stored in the repository: Coal/Assimp/Boost come from prebuilt
+  installs under `C:\build_packages`, and Eigen from `EIGEN_INCLUDE_DIR` (see `eigen.pri`).
 
 ## Dependency Spike Output Template
 
@@ -144,24 +144,18 @@ Use two tiny triangle meshes in code or temporary STL files:
 
 ## Current Local Dependency Roots
 
-The workspace now has reproducible Windows/MSVC install scripts for the mesh-backend prerequisites:
+The former `scripts\build_third_party_*_msvc.bat` install scripts were removed so they cannot
+overwrite the prebuilt packages. The mesh-backend prerequisites are consumed read-only.
 
-- `scripts\build_third_party_assimp_msvc.bat`
-- `scripts\build_third_party_boost_msvc.bat`
-- `scripts\build_third_party_libccd_msvc.bat`
-- `scripts\build_third_party_fcl_msvc.bat`
-- `scripts\build_third_party_coal_msvc.bat`
+Installed roots currently used (override with `BUILD_PACKAGES_ROOT` or the per-package
+`COAL_ROOT`/`ASSIMP_ROOT`/`BOOST_ROOT`):
 
-Installed roots currently available:
+- `C:\build_packages\assimp-6.0.5`
+- `C:\build_packages\boost-1.87.0`
+- `C:\build_packages\coal-3.0.3`
 
-- `third_party\install\assimp`
-- `third_party\install\boost`
-- `third_party\install\libccd`
-- `third_party\install\fcl`
-- `third_party\install\coal`
-
-These directories are intentionally kept under `third_party/` so the optional mesh-backend
-environment can be reproduced on Windows 11 with MSVC. Generated simplified mesh outputs remain
+FCL and libccd are not installed there; they are not needed by Coal 3.x or any current target.
+The repository-local `third_party/` workspace has been retired. Generated simplified mesh outputs remain
 ignored separately under `presets/Nachi/MZ04/simplified/` and
 `presets/Nachi/MZ04/*_simplified*.json`.
 

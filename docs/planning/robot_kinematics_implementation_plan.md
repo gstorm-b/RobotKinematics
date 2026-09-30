@@ -765,8 +765,8 @@ Current status:
   runtime measurement remains open.
 - Review hardening before Task 10.6 is complete: mesh profile `loadFile(path)` resolves relative STL
   paths from the profile directory, mesh numeric JSON fields are strict, Coal safety-margin behavior
-  is covered by test, and optional dependency sources/build trees/install roots live under
-  `third_party/` for Windows 11 + MSVC reproducibility.
+  is covered by test, and optional dependencies come from prebuilt installs under
+  `C:\build_packages` (the repository-local `third_party/` was retired).
 
 ### Task 10.1: Run Mesh Backend Dependency Spike
 

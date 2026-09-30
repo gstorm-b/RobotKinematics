@@ -8,6 +8,7 @@ class Robot3DVisualizerLogicTests : public QObject
 
 private slots:
     void convertsBetweenNachiPendantOrderAndPose();
+    void extractsCanonicalZyxEulerAngles();
     void buildsMillimeterVisualDeltaMatrixFromHomePose();
     void appliesCenteringToolHomeVisualCorrection();
     void mapsPostureBranchesToConfiguredLabels();

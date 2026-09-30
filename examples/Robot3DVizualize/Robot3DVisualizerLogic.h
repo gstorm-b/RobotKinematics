@@ -37,6 +37,19 @@ inline double normalizeDegrees(double value)
     return normalized;
 }
 
+// Canonical ZYX Euler angles (yaw, pitch, roll) with pitch in [-pi/2, pi/2]. Mirrors
+// Eigen's MatrixBase::canonicalEulerAngles(2, 1, 0), which Eigen 3.4 does not provide.
+inline Eigen::Vector3d canonicalEulerZyx_rad(const Eigen::Matrix3d& rotation)
+{
+    const double yaw = std::atan2(rotation(1, 0), rotation(0, 0));
+    const double pitch = std::atan2(-rotation(2, 0), std::hypot(rotation(2, 2), rotation(2, 1)));
+    const double s = std::sin(yaw);
+    const double c = std::cos(yaw);
+    const double roll = std::atan2(s * rotation(0, 2) - c * rotation(1, 2),
+                                   c * rotation(1, 1) - s * rotation(0, 1));
+    return Eigen::Vector3d(yaw, pitch, roll);
+}
+
 inline RobotKinematics::Pose fromNachiPendantPose(double x_mm,
                                                   double y_mm,
                                                   double z_mm,
@@ -49,7 +62,7 @@ inline RobotKinematics::Pose fromNachiPendantPose(double x_mm,
 
 inline PendantPoseDisplay toNachiPendantPose(const RobotKinematics::Pose& pose)
 {
-    const Eigen::Vector3d eulerZyx = pose.isometry().linear().canonicalEulerAngles(2, 1, 0);
+    const Eigen::Vector3d eulerZyx = canonicalEulerZyx_rad(pose.isometry().linear());
 
     PendantPoseDisplay display;
     display.x_mm = RobotKinematics::units::toMm(pose.translation_m().x());

@@ -52,9 +52,7 @@ ui_*.h
 /presets/Nachi/MZ04/simplified/
 /presets/Nachi/MZ04/*_simplified*.json
 
-# --- Tracked third-party dependency workspace ---
-# The project intentionally keeps optional mesh-backend dependency sources,
-# build trees, and install outputs under third_party/ for reproducible local
-# Windows/MSVC development.
-!/third_party/
-!/third_party/**
+# --- Legacy third-party workspace ---
+# Dependencies now come from C:\build_packages (Coal/Assimp/Boost) and an
+# external Eigen (see eigen.pri). Keep any stale local copy out of git.
+/third_party/

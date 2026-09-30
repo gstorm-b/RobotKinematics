@@ -1,5 +1,9 @@
 # Mesh Collision Backend Spike
 
+> Historical record. The `third_party/` paths and `scripts\build_third_party_*_msvc.bat` scripts
+> below describe the spike-time workspace, which has since been retired and removed. Current builds use prebuilt Coal/Assimp/Boost under `C:\build_packages`
+> and an external Eigen (see `eigen.pri` and `docs/developer-guide/building-and-linking.md`).
+
 ## Summary
 
 - Recommended backend: `Coal`.
