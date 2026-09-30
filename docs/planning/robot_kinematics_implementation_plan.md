@@ -556,15 +556,41 @@ Mesh collision backend
 
 **Estimated scope:** Medium.
 
+### Task 6.3: Add Nachi MZ07F Preset
+
+**Description:** Add Nachi MZ07F from teach-pendant data and the vendor STEP/STL assets (user-requested scope, same MZ series as Task 6.2).
+
+**Status:** Implemented (docs/preset_references/nachi-mz07f.md): nominal standard-DH kinematics with a 50 mm J1/J2 shoulder offset, actual joint limits of the reference robot, and posture labels assumed from MZ04D (not separately measured). FK verified for 6 flange poses (<= 0.065 mm / 0.0124 deg). The shoulder offset excludes the analytic spherical-wrist plugin, so IK is numerical. Mesh `meshToLink` transforms are derived from the `MZ07F.step` assembly.
+
+**Acceptance criteria:**
+- [x] Preset creates a valid serial 6DOF config.
+- [x] Preset is available as JSON.
+- [x] Preset has built-in C++ fallback.
+- [x] Source references for dimensions and joint limits are recorded; posture rules are assumed from MZ04D.
+- [x] FK tests pass against the 6 teach-pendant flange poses.
+- [x] Seeded IK round-trip test passes for a non-singular reference pose.
+- [x] Primitive and mesh collision profiles load and validate; mesh placement reproduces the STEP assembly.
+
+**Verification:**
+- [x] `tests/integration/NachiMZ07FTests.cpp` passes (mesh-backend checks run in the Coal build).
+
+**Files likely touched:**
+- `include/RobotKinematics/Presets/NachiMZ07F.h`
+- `src/Presets/NachiMZ07F.cpp`
+- `presets/Nachi/MZ07F/`
+- `tests/integration/NachiMZ07FTests.cpp`
+
+**Estimated scope:** Medium.
+
 ### Checkpoint: Real Presets
 
 - [x] Library builds.
 - [x] All unit tests pass.
-- [x] All preset integration tests pass (Nachi MZ04D).
+- [x] All preset integration tests pass (Nachi MZ04D, Nachi MZ07F).
 - [x] Accuracy criteria are met for normal non-singular fixtures (MZ04D FK <= 0.035 mm / 0.01 deg).
-- [x] Real preset source references are recorded (Nachi MZ04D).
-- [x] Documentation explains real preset limitations and source references (Nachi MZ04D).
-- [x] Kawasaki RS007N remains blocked pending verified source data; Nachi MZ04D is implemented.
+- [x] Real preset source references are recorded (Nachi MZ04D, Nachi MZ07F).
+- [x] Documentation explains real preset limitations and source references (Nachi MZ04D, Nachi MZ07F).
+- [x] Kawasaki RS007N remains blocked pending verified source data; Nachi MZ04D and MZ07F are implemented.
 
 ## Phase 7: Adapters
 

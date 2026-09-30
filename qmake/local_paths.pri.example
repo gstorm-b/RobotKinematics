@@ -1,0 +1,37 @@
+# Template for qmake/local_paths.pri — machine-local third-party paths.
+#
+# Copy this file to qmake/local_paths.pri (ignored by git) and edit the paths for your machine.
+#
+# Why a qmake file: every RobotKinematics .pro/.pri resolves its dependencies through
+# qmake/dependency_paths.pri, which includes qmake/local_paths.pri. A build started from
+# Qt Creator and a build started from scripts\*.bat therefore see the same installs, and
+# neither needs environment variables exported beforehand.
+#
+# It is a FALLBACK, never an override. Precedence is:
+#   qmake command line  >  environment variable  >  qmake/local_paths.pri
+# dependency_paths.pri copies environment variables first; the isEmpty() guards below keep
+# anything already set. Do not remove them.
+#
+# Only EIGEN_INCLUDE_DIR is required for the default library/test build. The other entries
+# are needed only by the optional targets named in each section. Missing required values stop
+# qmake with an error that points back to this file.
+
+# --- Eigen (header-only, required by every target) ----------------------------------------
+# Directory that contains Eigen/Core. The prebuilt Coal package was compiled against Eigen
+# 3.4.0; keep Coal and RobotKinematics on the same Eigen headers.
+isEmpty(EIGEN_INCLUDE_DIR): EIGEN_INCLUDE_DIR = "C:/Program Files/PCL 1.15.1/3rdParty/Eigen3/include/eigen3"
+
+# --- Mesh collision backend (only with CONFIG+=robotkinematics_mesh_collision) -------------
+# Install roots of prebuilt packages. These are read-only inputs; the repository never
+# builds or installs into them.
+isEmpty(COAL_ROOT):         COAL_ROOT         = "C:/build_packages/coal-3.0.3"
+isEmpty(BOOST_ROOT):        BOOST_ROOT        = "C:/build_packages/boost-1.87.0"
+# Optional; defaults to $$BOOST_ROOT/include/boost-1_87 when left empty.
+isEmpty(BOOST_INCLUDE_DIR): BOOST_INCLUDE_DIR = "C:/build_packages/boost-1.87.0/include/boost-1_87"
+isEmpty(ASSIMP_ROOT):       ASSIMP_ROOT       = "C:/build_packages/assimp-6.0.5"
+
+# --- VTK (Robot3DVizualize example and mesh_collision_spike only) --------------------------
+# Must be built with Qt support (vtkGUISupportQt). VTK_INCLUDEPATH, VTK_LIBPATH, VTK_BINPATH
+# and VTK_LIB_SUFFIX can also be set here to override the layout derived from VTK_ROOT.
+isEmpty(VTK_ROOT):          VTK_ROOT          = "C:/build_packages/vtk/install-x64-cuda-qt"
+isEmpty(VTK_VERSION):       VTK_VERSION       = 9.6

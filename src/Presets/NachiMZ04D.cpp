@@ -43,9 +43,14 @@ SerialRobotConfig nachiMZ04D()
     config.frames.baseLinkId = "base_link";
     config.frames.flangeLinkId = "flange";
     config.frames.userFrames.push_back(UserFrame{
-        "table_frame",
+        "robot_frame",
         "base_link",
-        Pose::fromXYZRPY_m_rad(0.35, 0.0, 0.0, 0.0, 0.0, 0.0),
+        Pose::fromXYZRPY_m_rad(0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+    });
+    config.frames.userFrames.push_back(UserFrame{
+        "ceiling_frame",
+        "base_link",
+        Pose::fromXYZRPY_mm_deg(0.0, 0.0, 0.0, 180.0, 0.0, 0.0),
     });
 
     // Canonical link transforms derived from the reverse-engineered standard-DH table
@@ -55,9 +60,9 @@ SerialRobotConfig nachiMZ04D()
         revolute("J1", "base_link", "link_1", Pose::fromXYZRPY_m_rad(0.0, 0.0, 0.340, 0.0, 0.0, 0.0),
                  JointLimits{deg(-170.0), deg(170.0), std::nullopt, std::nullopt}),
         revolute("J2", "link_1", "link_2", Pose::fromXYZRPY_m_rad(0.0, 0.0, 0.0, kHalfPi, 0.0, 0.0),
-                 JointLimits{deg(-90.0), deg(145.0), std::nullopt, std::nullopt}),
+                 JointLimits{deg(-55.0), deg(180.0), std::nullopt, std::nullopt}),
         revolute("J3", "link_2", "link_3", Pose::fromXYZRPY_m_rad(0.260, 0.0, 0.0, 0.0, 0.0, 0.0),
-                 JointLimits{deg(-125.0), deg(280.0), std::nullopt, std::nullopt}),
+                 JointLimits{deg(-70.0), deg(190.0), std::nullopt, std::nullopt}),
         revolute("J4", "link_3", "link_4", Pose::fromXYZRPY_m_rad(0.025, -0.280, 0.0, kHalfPi, 0.0, 0.0),
                  JointLimits{deg(-190.0), deg(190.0), std::nullopt, std::nullopt}),
         revolute("J5", "link_4", "link_5", Pose::fromXYZRPY_m_rad(0.0, 0.0, 0.0, -kHalfPi, 0.0, 0.0),
@@ -68,7 +73,7 @@ SerialRobotConfig nachiMZ04D()
 
     config.tools = {
         Tool{"default", "Default Tool", Pose::identity()},
-        Tool{"pointer", "Pointer Tool", Pose::fromXYZRPY_m_rad(0.0, 0.0, 0.05, 0.0, 0.0, 0.0)},
+        Tool{"pointer", "Pointer Tool", Pose::fromXYZRPY_m_rad(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)},
     };
     config.defaultToolId = "default";
 

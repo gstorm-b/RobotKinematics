@@ -8,7 +8,7 @@ This page covers building it and linking it into your own application.
 | Dependency | How it is provided | Why |
 |---|---|---|
 | **Qt 6 Core** | External (you install it) | The library links `QtCore`; `PresetJsonLoader` uses Qt's JSON + file IO. |
-| **Eigen** | External, header-only. `eigen.pri` reads `EIGEN_INCLUDE_DIR` (default `C:/Program Files/PCL 1.15.1/3rdParty/Eigen3/include/eigen3`, Eigen 3.4.0) | All linear algebra and the `Pose` transform type. |
+| **Eigen** | External, header-only. `EIGEN_INCLUDE_DIR` in `qmake/local_paths.pri` (see below) | All linear algebra and the `Pose` transform type. |
 | **C++17** | Compiler flag | Standard the library targets. |
 | **Qt Test** | External | Only needed to build/run the test suite, not to use the library. |
 
@@ -67,19 +67,34 @@ Outputs stay under each example folder:
 
 See each example README for the expected output and the manual qmake flow.
 
-## Third-party mesh backend dependencies
+## Third-party dependency paths
 
-Optional mesh-backend dependencies are not stored in the repository. The scripts use prebuilt
-packages under `BUILD_PACKAGES_ROOT` (default `C:\build_packages`):
+Third-party dependencies are not stored in the repository. Every path is declared once in
+`qmake/local_paths.pri`, which is machine-local and ignored by git. Create it from the tracked template:
 
-| Package | Default install root | Override |
+```powershell
+copy qmake\local_paths.pri.example qmake\local_paths.pri
+```
+
+`qmake/dependency_paths.pri` resolves each variable with the precedence
+**qmake command line > environment variable > `local_paths.pri`**, so Qt Creator builds and
+`scripts\*.bat` builds see the same installs without exporting anything. The scripts do not
+hard-code dependency paths.
+
+| Variable | Needed by | This workstation |
 |---|---|---|
-| Coal 3.0.3 | `C:\build_packages\coal-3.0.3` | `COAL_ROOT` |
-| Assimp 6.0.5 | `C:\build_packages\assimp-6.0.5` | `ASSIMP_ROOT` |
-| Boost 1.87.0 | `C:\build_packages\boost-1.87.0` | `BOOST_ROOT` |
+| `EIGEN_INCLUDE_DIR` | every target | `C:/Program Files/PCL 1.15.1/3rdParty/Eigen3/include/eigen3` (Eigen 3.4.0) |
+| `COAL_ROOT` | `CONFIG+=robotkinematics_mesh_collision` | `C:/build_packages/coal-3.0.3` |
+| `BOOST_ROOT`, `BOOST_INCLUDE_DIR` | mesh collision | `C:/build_packages/boost-1.87.0` (`include/boost-1_87`) |
+| `ASSIMP_ROOT` | mesh collision | `C:/build_packages/assimp-6.0.5` |
+| `VTK_ROOT`, `VTK_VERSION` | Robot3DVizualize, mesh_collision_spike | `C:/build_packages/vtk/install-x64-cuda-qt`, `9.6` |
 
-The prebuilt Coal package was compiled against PCL 1.15.1's Eigen 3.4.0, which is why
-`eigen.pri` defaults to the same headers. FCL and libccd are not required by Coal 3.x or by
+Targets that need third-party DLLs at runtime also get a generated
+`robotkinematics_runtime_env.bat` in their build directory; `test_msvc_mesh_coal.bat` and
+`run_mesh_collision_benchmark_msvc.bat` call it to put those DLL directories on `PATH`.
+
+The prebuilt Coal package was compiled against PCL 1.15.1's Eigen 3.4.0, so keep
+`EIGEN_INCLUDE_DIR` on the same headers. FCL and libccd are not required by Coal 3.x or by
 any RobotKinematics target.
 
 The repository does not build these packages. Their prebuilt installs under `C:\build_packages` are

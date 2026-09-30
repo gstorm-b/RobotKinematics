@@ -1,6 +1,9 @@
 # Agent Instructions: Robot3DVizualize
 
-This file is for agents implementing the Nachi MZ04D Qt/VTK example.
+This file is for agents implementing the Nachi MZ04D / MZ07F Qt/VTK example.
+
+MZ07F support (robot selector, mesh-profile-driven STL placement, meter-unit STL scaling) is
+described in `HANDOFF.md` under "Nachi MZ07F Support".
 
 ## Required Context Load
 
@@ -20,7 +23,7 @@ Phase 6 is complete. The example:
 - is isolated from the root `RobotKinematics.pro` build;
 - builds with Qt 6/qmake and external VTK;
 - links against the core `RobotKinematics` static library through `Robot3DVizualize.pro`;
-- uses the local VTK path `D:\Project\vtk_build\vtk\install-x64-cuda-qt-vs` as the MSVC build-script default when `VTK_ROOT` is unset;
+- reads `VTK_ROOT`/`VTK_VERSION` from the machine-local `qmake/local_paths.pri` (build scripts no longer hard-code a VTK path);
 - starts a `QVTKOpenGLNativeWidget` scene;
 - loads all eight STL runtime assets from `presets/Nachi/MZ04/`;
 - renders orientation axes, a simple ground plane, distinct part colors, and basic lighting;
@@ -62,6 +65,9 @@ Use STL files for runtime rendering:
 - `MZ04-01_j5.stl`
 - `MZ04-01_j6.stl`
 - `Centering_tool.stl`
+
+For MZ07F, use `presets/Nachi/MZ07F/MZ07F-01_{base,j1..j6}.stl` (meters), placed by the
+`meshToLink` transforms in `nachi_mz07f_mesh_collision.json` (derived from `MZ07F.step`).
 
 Keep STEP files as CAD source references. Do not attempt direct STEP loading in Phase 1.
 

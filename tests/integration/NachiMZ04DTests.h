@@ -9,6 +9,7 @@ class NachiMZ04DTests : public QObject
 private slots:
     void fallbackPresetIsValidAndHasRequiredMetadata();
     void jsonPresetMatchesCppFallbackForSolverFacingFields();
+    void jointLimitsFollowTeachPendantNotManual();
     void forwardKinematicsMatchesTeachPendantPoses();
     void forwardKinematicsWithToolMatchesMeasuredPoses();
     void postureClassificationMatchesNachiManualRules();

@@ -3,8 +3,8 @@ REM ============================================================================
 REM Incremental OUT-OF-SOURCE MinGW build for RobotKinematics.
 REM
 REM Handles the build traps:
-REM   - Eigen headers come from EIGEN_INCLUDE_DIR (see eigen.pri; default is the
-REM     PCL 1.15.1 Eigen 3.4.0 install), never from MSYS2's Eigen.
+REM   - Eigen headers come from EIGEN_INCLUDE_DIR in qmake/local_paths.pri,
+REM     never from MSYS2's Eigen.
 REM   - Builds out-of-source so in-source artifacts never contaminate it.
 REM
 REM This script builds only. Use test_mingw.bat to run tests, or rebuild_mingw.bat

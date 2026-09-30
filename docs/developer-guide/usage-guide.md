@@ -215,7 +215,7 @@ can resolve them against an `FkChain`:
 #include <RobotKinematics/Model/FrameRegistry.h>
 
 const FrameRegistry frames = FrameRegistry::fromConfig(config);
-const Result<UserFrame> frame = frames.get(FrameId{"table_frame"});
+const Result<UserFrame> frame = frames.get(FrameId{"ceiling_frame"});
 
 const FkChain chain = ForwardKinematics::computeChain(config, q);
 const Result<Pose> frameInBase = ForwardKinematics::userFrameInBase(chain, frame.value);

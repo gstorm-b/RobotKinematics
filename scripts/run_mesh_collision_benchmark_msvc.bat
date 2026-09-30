@@ -4,10 +4,6 @@ setlocal
 if "%QT_MSVC_DIR%"=="" set "QT_MSVC_DIR=C:\Qt\6.11.1\msvc2022_64"
 
 set "ROOT=%~dp0.."
-if "%BUILD_PACKAGES_ROOT%"=="" set "BUILD_PACKAGES_ROOT=C:\build_packages"
-if "%COAL_ROOT%"=="" set "COAL_ROOT=%BUILD_PACKAGES_ROOT%\coal-3.0.3"
-if "%ASSIMP_ROOT%"=="" set "ASSIMP_ROOT=%BUILD_PACKAGES_ROOT%\assimp-6.0.5"
-if "%BOOST_ROOT%"=="" set "BOOST_ROOT=%BUILD_PACKAGES_ROOT%\boost-1.87.0"
 set "EXE=%ROOT%\build\tools\mesh_collision_benchmark\release\mesh_collision_benchmark.exe"
 
 if not exist "%EXE%" (
@@ -15,7 +11,13 @@ if not exist "%EXE%" (
     exit /b 1
 )
 
-set "PATH=%QT_MSVC_DIR%\bin;%COAL_ROOT%\bin;%ASSIMP_ROOT%\bin;%BOOST_ROOT%\lib;%PATH%"
+set "PATH=%QT_MSVC_DIR%\bin;%PATH%"
+set "RUNTIME_ENV=%ROOT%\build\tools\mesh_collision_benchmark\robotkinematics_runtime_env.bat"
+if not exist "%RUNTIME_ENV%" (
+    echo [ERROR] %RUNTIME_ENV% not found. Run scripts\build_mesh_collision_benchmark_msvc.bat first.
+    exit /b 1
+)
+call "%RUNTIME_ENV%"
 "%EXE%" %* || ( echo [ERROR] mesh_collision_benchmark.exe failed & exit /b 1 )
 
 echo [OK] MSVC mesh collision benchmark run complete.

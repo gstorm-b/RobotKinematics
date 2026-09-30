@@ -49,8 +49,12 @@ ui_*.h
 
 # --- Generated mesh-simplification artifacts ---
 # tools/mesh_simplification regenerates these from the original mesh profile.
-/presets/Nachi/MZ04/simplified/
-/presets/Nachi/MZ04/*_simplified*.json
+/presets/Nachi/*/simplified/
+/presets/Nachi/*/*_simplified*.json
+
+# --- Machine-local dependency paths ---
+# Created from qmake/local_paths.pri.example; see that file.
+/qmake/local_paths.pri
 
 # --- Legacy third-party workspace ---
 # Dependencies now come from C:\build_packages (Coal/Assimp/Boost) and an

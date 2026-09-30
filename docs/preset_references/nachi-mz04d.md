@@ -59,13 +59,37 @@ DH parameters (user guess):
     J5  180.0       72.0    180.0       0
 Maybe the orent or length when make the parameters table was misunderstand, be minus or plus.
 
-Joint limits (from robot teach pendant):
+Joint limits (from the robot teach pendant; these are the values applied to the preset):
+J1 (-170.0, 170.0)
+J2 (-55.0, 180.0)
+J3 (-70.0, 190.0)
+J4 (-190.0, 190.0)
+J5 (-120.0, 120.0)
+J6 (-360.0, 360.0)
+
+Joint limits listed in the official Nachi manual (NOT used by the preset; the teach pendant on the
+reference robot does not accept these J2/J3 ranges, so the pendant values above take precedence):
 J1 (-170.0, 170.0)
 J2 (-145.0, 90.0)
 J3 (-125.0, 280.0)
 J4 (-190.0, 190.0)
 J5 (-120.0, 120.0)
 J6 (-360.0, 360.0)
+
+Why the preset uses the pendant limits: every joint value in this file (the FK fixtures and the
+Arm-config set) is a teach-pendant reading, so the canonical model's joint convention is the
+pendant's. Limits must be expressed in that same convention.
+
+Observed manual-vs-pendant relation (analysis only, not confirmed by Nachi documentation):
+
+- J2: pendant = manual + 90 deg for both bounds (-145 + 90 = -55, 90 + 90 = 180). This is consistent
+  with pose 21 (pendant J2 = 90) being the manual's reference posture, i.e. the manual measures J2
+  from a zero that sits 90 deg away from the pendant zero.
+- J3: not a constant offset (manual span 405 deg, pendant span 260 deg), so the manual J3 range
+  appears to use a different definition. Do not convert manual J3 limits into the preset.
+- The previous preset used J2 (-90, 145) and J3 (-125, 280). Those values rejected pendant-valid
+  J2 in (145, 180] and accepted J2 in [-90, -55) and J3 outside (-70, 190), which the controller
+  refuses.
 
 ---
 
@@ -99,8 +123,9 @@ Two corrections were required:
 
 This reproduces all 21 reference poses to **<= 0.035 mm and <= 0.010 deg**. It is encoded as
 canonical joint origins in `src/Presets/NachiMZ04D.cpp` / `presets/Nachi/MZ04/nachi_mz04d.json` and
-verified point-by-point in `tests/integration/NachiMZ04DTests.cpp`. Joint limits above are
-applied to the preset.
+verified point-by-point in `tests/integration/NachiMZ04DTests.cpp`. The teach-pendant joint
+limits above are applied to the preset (`src/Presets/NachiMZ04D.cpp` and
+`presets/Nachi/MZ04/nachi_mz04d.json`); the manual limits are kept for reference only.
 
 For IK tests that compare an expected joint vector against a solution, use the project default
 joint-angle comparison tolerance of **<= 0.0001 degree** per revolute joint. If a fixture derives

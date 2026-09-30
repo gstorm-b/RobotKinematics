@@ -235,10 +235,9 @@ If the backend is unavailable:
 - the API should report `UnsupportedSolver` or a collision-specific `InvalidRequest` message for
   mesh requests when no mesh backend is compiled.
 
-Dependencies are not stored in the repository. Install roots default to
-`C:\build_packages\<name>-<version>` (`BUILD_PACKAGES_ROOT`), with sources under
-`C:\build_packages\_src\<name>` and build trees under `C:\build_packages\_build\<name>`.
-Eigen comes from `EIGEN_INCLUDE_DIR` (see `eigen.pri`). The repository no longer ships scripts that
+Dependencies are not stored in the repository. `COAL_ROOT`, `BOOST_ROOT`, `ASSIMP_ROOT` and
+`EIGEN_INCLUDE_DIR` are declared in the machine-local `qmake/local_paths.pri` (on this workstation they point
+at prebuilt installs under `C:\build_packages`). The repository no longer ships scripts that
 build or install these packages; they are consumed read-only.
 
 ## Implementation Phases

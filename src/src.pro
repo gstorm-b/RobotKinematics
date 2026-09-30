@@ -44,6 +44,7 @@ SOURCES += \
     Presets/PresetJsonLoader.cpp \
     Presets/Virtual6DofTestArm.cpp \
     Presets/NachiMZ04D.cpp \
+    Presets/NachiMZ07F.cpp \
     Solvers/IKSolutionRanker.cpp \
     Solvers/NumericalIKSolver.cpp \
     Solvers/Analytic6DofSphericalWristSolver.cpp
@@ -88,6 +89,7 @@ HEADERS += \
     ../include/RobotKinematics/Presets/PresetJsonLoader.h \
     ../include/RobotKinematics/Presets/Virtual6DofTestArm.h \
     ../include/RobotKinematics/Presets/NachiMZ04D.h \
+    ../include/RobotKinematics/Presets/NachiMZ07F.h \
     ../include/RobotKinematics/Solvers/IKSolutionRanker.h \
     ../include/RobotKinematics/Solvers/IKSolver.h \
     ../include/RobotKinematics/Solvers/NumericalIKSolver.h \

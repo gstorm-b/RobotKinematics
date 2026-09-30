@@ -40,7 +40,9 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    // robotModelId selects the example robot ("MZ04D" or "MZ07F"); unknown or empty ids fall
+    // back to MZ04D.
+    explicit MainWindow(const QString& robotModelId = QString(), QWidget *parent = nullptr);
     ~MainWindow() override;
 
 private:
@@ -50,6 +52,9 @@ private:
         std::string linkId;
         RobotKinematics::Pose homeLinkInBase = RobotKinematics::Pose::identity();
         RobotKinematics::Pose homeVisualCorrection = RobotKinematics::Pose::identity();
+        // Multiplies authored STL coordinates into the millimeter VTK world (1 for mm assets,
+        // 1000 for meter assets).
+        double stlScaleToMm = 1.0;
         std::array<double, 3> baseColorRgb = {0.75, 0.75, 0.75};
         int jointAxisIndex = -1;
         bool isLoaded = false;
@@ -114,6 +119,8 @@ private:
     void updateCollisionState(const RobotKinematics::JointVector& joints);
     void updateIkStatus(const QString& message);
     void updateActionState();
+    void populateRobotModelCombo();
+    void switchRobotModel(const QString& robotModelId);
     void populateCombos();
     void populateJointControls();
     void populatePostureControls();
@@ -144,6 +151,7 @@ private:
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow_;
     vtkSmartPointer<vtkOrientationMarkerWidget> orientationMarker_;
     vtkSmartPointer<vtkRenderer> renderer_;
+    QString robotModelId_;
     RobotKinematics::SerialRobotConfig config_;
     RobotKinematics::SerialRobotKinematics robot_;
     RobotKinematics::FrameRegistry frameRegistry_;

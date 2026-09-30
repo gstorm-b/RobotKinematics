@@ -1,23 +1,16 @@
 # External VTK configuration for the Robot3DVizualize example.
 #
 # VTK is intentionally not vendored and not required by the core library build.
-# Provide VTK_ROOT and, if needed, VTK_VERSION from the environment or qmake command line:
+# VTK_ROOT and VTK_VERSION are resolved by qmake/dependency_paths.pri:
+#   qmake command line > environment > qmake/local_paths.pri
 #
-#   set VTK_ROOT=C:\path\to\vtk-install
-#   set VTK_VERSION=9.6
-#
-# Optional overrides:
+# Optional overrides (same resolution):
 #   VTK_INCLUDEPATH, VTK_LIBPATH, VTK_BINPATH, VTK_LIB_SUFFIX
 
-isEmpty(VTK_ROOT): VTK_ROOT = $$(VTK_ROOT)
-isEmpty(VTK_VERSION): VTK_VERSION = $$(VTK_VERSION)
-isEmpty(VTK_INCLUDEPATH): VTK_INCLUDEPATH = $$(VTK_INCLUDEPATH)
-isEmpty(VTK_LIBPATH): VTK_LIBPATH = $$(VTK_LIBPATH)
-isEmpty(VTK_BINPATH): VTK_BINPATH = $$(VTK_BINPATH)
-isEmpty(VTK_LIB_SUFFIX): VTK_LIB_SUFFIX = $$(VTK_LIB_SUFFIX)
+include($$PWD/../../qmake/dependency_paths.pri)
 
 isEmpty(VTK_ROOT) {
-    error("VTK_ROOT is not set. Install VTK externally and set VTK_ROOT, for example C:\\VTK\\install. The core library does not require VTK.")
+    error("VTK_ROOT is not set. Install VTK externally and set VTK_ROOT in qmake/local_paths.pri. The core library does not require VTK.")
 }
 
 isEmpty(VTK_VERSION): VTK_VERSION = 9.6
@@ -55,3 +48,6 @@ for(vtkLib, VTK_LIBS) {
 }
 
 DEFINES += ROBOT3D_VISUALIZER_HAS_VTK
+
+ROBOTKINEMATICS_RUNTIME_PATHS += $$VTK_BINPATH
+include($$PWD/../../qmake/runtime_env.pri)

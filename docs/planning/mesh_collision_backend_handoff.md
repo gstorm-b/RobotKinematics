@@ -87,8 +87,8 @@ explicitly approves a core VTK dependency.
 - Do not silently reuse Qt/VTK visual correction code as collision metadata.
 - Do not remove primitive collision; it remains fallback/debug.
 - Do not claim physical safety certification.
-- Optional dependencies are not stored in the repository: Coal/Assimp/Boost come from prebuilt
-  installs under `C:\build_packages`, and Eigen from `EIGEN_INCLUDE_DIR` (see `eigen.pri`).
+- Optional dependencies are not stored in the repository; their paths are declared in the
+  machine-local `qmake/local_paths.pri`.
 
 ## Dependency Spike Output Template
 
@@ -147,8 +147,8 @@ Use two tiny triangle meshes in code or temporary STL files:
 The former `scripts\build_third_party_*_msvc.bat` install scripts were removed so they cannot
 overwrite the prebuilt packages. The mesh-backend prerequisites are consumed read-only.
 
-Installed roots currently used (override with `BUILD_PACKAGES_ROOT` or the per-package
-`COAL_ROOT`/`ASSIMP_ROOT`/`BOOST_ROOT`):
+Installed roots currently used on this workstation (set as `COAL_ROOT`/`BOOST_ROOT`/
+`ASSIMP_ROOT` in `qmake/local_paths.pri`):
 
 - `C:\build_packages\assimp-6.0.5`
 - `C:\build_packages\boost-1.87.0`

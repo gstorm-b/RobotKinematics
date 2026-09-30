@@ -25,6 +25,7 @@
 #include <RobotKinematics/Core/Units.h>
 #include <RobotKinematics/Kinematics/JointLimitValidator.h>
 #include <RobotKinematics/Presets/NachiMZ04D.h>
+#include <RobotKinematics/Presets/NachiMZ07F.h>
 
 #include <vtkActor.h>
 #include <vtkAxesActor.h>
@@ -60,7 +61,8 @@ struct RobotVisualPartSpec
     const char* linkId;
 };
 
-constexpr std::array<RobotVisualPartSpec, 8> kRobotParts = {{
+// Part order matches the Debug tab rows (base, j1..j6, tool).
+constexpr std::array<RobotVisualPartSpec, 8> kMz04dParts = {{
     {"base", "Base", "MZ04-01_base.stl", "Silver", "base_link"},
     {"j1", "Joint 1", "MZ04-01_j1.stl", "SlateGray", "link_1"},
     {"j2", "Joint 2", "MZ04-01_j2.stl", "LightSteelBlue", "link_2"},
@@ -71,17 +73,65 @@ constexpr std::array<RobotVisualPartSpec, 8> kRobotParts = {{
     {"tool", "Centering Tool Mesh", "Centering_tool.stl", "DarkOrange", "flange"},
 }};
 
+constexpr std::array<RobotVisualPartSpec, 7> kMz07fParts = {{
+    {"base", "Base", "MZ07F-01_base.stl", "Silver", "base_link"},
+    {"j1", "Joint 1", "MZ07F-01_j1.stl", "SlateGray", "link_1"},
+    {"j2", "Joint 2", "MZ07F-01_j2.stl", "LightSteelBlue", "link_2"},
+    {"j3", "Joint 3", "MZ07F-01_j3.stl", "CadetBlue", "link_3"},
+    {"j4", "Joint 4", "MZ07F-01_j4.stl", "LightSkyBlue", "link_4"},
+    {"j5", "Joint 5", "MZ07F-01_j5.stl", "SteelBlue", "link_5"},
+    {"j6", "Joint 6", "MZ07F-01_j6.stl", "DodgerBlue", "flange"},
+}};
+
+struct RobotSampleSpec
+{
+    const char* label;
+    const char* toolTip;
+    std::array<double, 6> jointsDeg;
+};
+
+// Per-robot example data. Visual placement comes either from the hand-tuned
+// visualHomeCorrectionForPartKey() table (MZ04D) or directly from the meshToLink transforms in
+// the preset's mesh collision profile (MZ07F), so editing that JSON moves the rendered STL and
+// the mesh collision geometry together.
+struct RobotModelSpec
+{
+    const char* id;
+    const char* displayName;
+    const char* assetsRelativeDir;
+    const RobotVisualPartSpec* parts;
+    std::size_t partCount;
+    bool visualPlacementFromMeshProfile;
+    bool hasBuiltInCollisionFallback;
+    RobotSampleSpec sampleA;
+    RobotSampleSpec sampleB;
+};
+
+const std::array<RobotModelSpec, 2> kRobotModels = {{
+    {"MZ04D", "Nachi MZ04D", "presets/Nachi/MZ04", kMz04dParts.data(), kMz04dParts.size(), false, true,
+     {"Teach P1", "Teach-pendant measurement point 1 from docs/preset_references/nachi-mz04d.md",
+      {28.1579, -18.8069, 163.839, -0.710019, 35.8922, 152.731}},
+     {"Teach P20", "Teach-pendant measurement point 20 from docs/preset_references/nachi-mz04d.md",
+      {-0.00219726, 0.00430813, 179.996, 0.00459559, 0.0046875, -0.000121055}}},
+    {"MZ07F", "Nachi MZ07F", "presets/Nachi/MZ07F", kMz07fParts.data(), kMz07fParts.size(), true, false,
+     {"Teach P1", "Teach-pendant measurement point 1 from docs/preset_references/nachi-mz07f.md",
+      {21.4862, 64.4801, -41.7744, -180.007, 22.7216, -158.513}},
+     {"Teach P4", "Teach-pendant measurement point 4 from docs/preset_references/nachi-mz07f.md",
+      {-20.077, 72.1081, -41.8598, -0.0550513, -30.2747, -20.0276}}},
+}};
+
+const RobotModelSpec& robotModelSpec(const QString& id)
+{
+    for (const RobotModelSpec& spec : kRobotModels) {
+        if (id.compare(QLatin1String(spec.id), Qt::CaseInsensitive) == 0) {
+            return spec;
+        }
+    }
+    return kRobotModels.front();
+}
+
 constexpr std::array<double, 6> kMidPointDegrees = {
     0.0, 90.0, 0.0, 0.0, 0.0, 0.0,
-};
-
-
-constexpr std::array<double, 6> kTeachPoint1Degrees = {
-    28.1579, -18.8069, 163.839, -0.710019, 35.8922, 152.731,
-};
-
-constexpr std::array<double, 6> kTeachPoint20Degrees = {
-    -0.00219726, 0.00430813, 179.996, 0.00459559, 0.0046875, -0.000121055,
 };
 
 constexpr std::array<double, 3> kCollisionHighlightColor = {
@@ -96,7 +146,7 @@ constexpr std::array<double, 3> kPrimitiveCapsuleColor = {
     0.98, 0.78, 0.34,
 };
 
-QString findAssetsDirectory()
+QString findAssetsDirectory(const QString& relativeDir)
 {
     const QString appDirPath = QCoreApplication::applicationDirPath();
 
@@ -113,8 +163,7 @@ QString findAssetsDirectory()
 
     for (const QString& rootPath : candidateRoots) {
         const QDir rootDir(rootPath);
-        const QString repoAssets =
-            rootDir.filePath(QStringLiteral("presets/Nachi/MZ04"));
+        const QString repoAssets = rootDir.filePath(relativeDir);
         if (QDir(repoAssets).exists()) {
             return QDir(repoAssets).absolutePath();
         }
@@ -296,8 +345,12 @@ Pose visualHomeCorrectionForPartKey(const QString& key)
     return Pose::identity();
 }
 
-SerialRobotConfig buildExampleConfig()
+SerialRobotConfig buildExampleConfig(const QString& robotModelId)
 {
+    if (QLatin1String(robotModelSpec(robotModelId).id) == QLatin1String("MZ07F")) {
+        return Presets::nachiMZ07F();
+    }
+
     SerialRobotConfig config = Presets::nachiMZ04D();
     config.tools.push_back(Tool{
         "centering_tool",
@@ -309,10 +362,11 @@ SerialRobotConfig buildExampleConfig()
 }
 } // namespace
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(const QString& robotModelId, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , config_(buildExampleConfig())
+    , robotModelId_(QString::fromLatin1(robotModelSpec(robotModelId).id))
+    , config_(buildExampleConfig(robotModelId_))
     , robot_(config_)
     , frameRegistry_(FrameRegistry::fromConfig(config_))
     , toolRegistry_(ToolRegistry::fromConfig(config_))
@@ -320,7 +374,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    setWindowTitle(QStringLiteral("RobotKinematics - Nachi MZ04D Pose Visualizer"));
+    setWindowTitle(QStringLiteral("RobotKinematics - %1 Pose Visualizer")
+                       .arg(QString::fromLatin1(robotModelSpec(robotModelId_).displayName)));
 
     setupVtkViewport();
     setupModelState();
@@ -411,6 +466,7 @@ void MainWindow::setupUiState()
     ui->mainSplitter->setStretchFactor(0, 0);
     ui->mainSplitter->setStretchFactor(1, 1);
 
+    populateRobotModelCombo();
     populateCombos();
     populateJointControls();
     populatePostureControls();
@@ -450,9 +506,16 @@ void MainWindow::connectSignals()
     connect(ui->midpointButton, &QPushButton::clicked, this,
             [this]() { setJointDegrees(kMidPointDegrees); });
     connect(ui->teachPoint1Button, &QPushButton::clicked, this,
-            [this]() { setJointDegrees(kTeachPoint1Degrees); });
+            [this]() { setJointDegrees(robotModelSpec(robotModelId_).sampleA.jointsDeg); });
     connect(ui->teachPoint20Button, &QPushButton::clicked, this,
-            [this]() { setJointDegrees(kTeachPoint20Degrees); });
+            [this]() { setJointDegrees(robotModelSpec(robotModelId_).sampleB.jointsDeg); });
+    connect(ui->robotModelComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            [this](int index) {
+                const QString id = ui->robotModelComboBox->itemData(index).toString();
+                if (!id.isEmpty() && id != robotModelId_) {
+                    switchRobotModel(id);
+                }
+            });
 
     connect(ui->copyCurrentTcpToTargetButton, &QPushButton::clicked, this, &MainWindow::resetTargetToCurrentTcp);
     connect(ui->solveBestButton, &QPushButton::clicked, this,
@@ -486,6 +549,31 @@ void MainWindow::connectSignals()
     for (QCheckBox* checkBox : partAxisCheckBoxes()) {
         connect(checkBox, &QCheckBox::toggled, this, [this](bool) { applyDebugVisualState(); });
     }
+}
+
+void MainWindow::populateRobotModelCombo()
+{
+    QSignalBlocker blocker(ui->robotModelComboBox);
+    ui->robotModelComboBox->clear();
+    for (const RobotModelSpec& spec : kRobotModels) {
+        ui->robotModelComboBox->addItem(QString::fromLatin1(spec.displayName), QString::fromLatin1(spec.id));
+    }
+    ui->robotModelComboBox->setCurrentIndex(ui->robotModelComboBox->findData(robotModelId_));
+}
+
+void MainWindow::switchRobotModel(const QString& robotModelId)
+{
+    // The robot model drives the solver, registries, collision profiles, and every VTK actor, so
+    // switching rebuilds the whole window instead of mutating that state in place.
+    auto* replacement = new MainWindow(robotModelId);
+    replacement->setAttribute(Qt::WA_DeleteOnClose);
+    replacement->setGeometry(geometry());
+    if (isMaximized()) {
+        replacement->showMaximized();
+    } else {
+        replacement->show();
+    }
+    close();
 }
 
 void MainWindow::populateCombos()
@@ -562,10 +650,11 @@ void MainWindow::populatePostureControls()
 
 void MainWindow::populateSampleButtons()
 {
-    ui->teachPoint1Button->setToolTip(
-        QStringLiteral("Teach-pendant measurement point 1 from docs/preset_references/nachi-mz04d.md"));
-    ui->teachPoint20Button->setToolTip(
-        QStringLiteral("Teach-pendant measurement point 20 from docs/preset_references/nachi-mz04d.md"));
+    const RobotModelSpec& spec = robotModelSpec(robotModelId_);
+    ui->teachPoint1Button->setText(QString::fromLatin1(spec.sampleA.label));
+    ui->teachPoint1Button->setToolTip(QString::fromLatin1(spec.sampleA.toolTip));
+    ui->teachPoint20Button->setText(QString::fromLatin1(spec.sampleB.label));
+    ui->teachPoint20Button->setToolTip(QString::fromLatin1(spec.sampleB.toolTip));
 }
 
 void MainWindow::populateCollisionControls()
@@ -728,23 +817,66 @@ void MainWindow::populateDebugControls()
     ui->baseAxisCheckBox->setEnabled(false);
     ui->toolAxisCheckBox->setEnabled(false);
 
-    ui->debugHintLabel->setText(
-        QStringLiteral("Use these toggles to inspect where each STL local origin ended up in the "
-                       "scene. Placement parameters live in mainwindow.cpp: "
-                       "`visualHomeCorrectionForPartKey()` for per-mesh corrections and "
-                       "`buildExampleConfig()` for the tool TCP offset. The Axis column shows "
-                       "the actual FK joint axis from `chain.joints`."));
+    // Rows without a visual part for this robot (e.g. MZ07F has no tool mesh) stay disabled.
+    const RobotModelSpec& spec = robotModelSpec(robotModelId_);
+    for (std::size_t index = spec.partCount; index < visible.size(); ++index) {
+        visible[index]->setChecked(false);
+        visible[index]->setEnabled(false);
+        origins[index]->setEnabled(false);
+        axes[index]->setEnabled(false);
+    }
+
+    if (spec.visualPlacementFromMeshProfile) {
+        const auto profileIt = config_.metadata.find("meshCollisionProfile");
+        const QString profilePath = profileIt == config_.metadata.end()
+                                        ? QStringLiteral("(no meshCollisionProfile metadata)")
+                                        : QString::fromStdString(profileIt->second);
+        ui->debugHintLabel->setText(
+            QStringLiteral("Use these toggles to inspect where each STL local origin ended up in the "
+                           "scene. For this robot each STL is placed at FK(link) * meshToLink, read "
+                           "from `%1`; edit meshToLink there and restart (or re-select the robot) "
+                           "to move both the rendered mesh and the mesh collision geometry. The Axis "
+                           "column shows the actual FK joint axis from `chain.joints`.")
+                .arg(profilePath));
+    } else {
+        ui->debugHintLabel->setText(
+            QStringLiteral("Use these toggles to inspect where each STL local origin ended up in the "
+                           "scene. Placement parameters live in mainwindow.cpp: "
+                           "`visualHomeCorrectionForPartKey()` for per-mesh corrections and "
+                           "`buildExampleConfig()` for the tool TCP offset. The Axis column shows "
+                           "the actual FK joint axis from `chain.joints`."));
+    }
 }
 
 void MainWindow::loadRobotVisuals()
 {
-    assetsDirectory_ = findAssetsDirectory();
+    const RobotModelSpec& spec = robotModelSpec(robotModelId_);
+    const QString assetsRelativeDir = QString::fromLatin1(spec.assetsRelativeDir);
+    assetsDirectory_ = findAssetsDirectory(assetsRelativeDir);
     QStringList loadErrors;
+
+    // For robots whose visual placement comes from the mesh collision profile, look up each
+    // part's meshToLink and unit scale by STL file name.
+    const auto findProfileMesh = [this](const QString& fileName) -> const MeshCollisionGeometry* {
+        if (!meshOriginalProfile_.valid) {
+            return nullptr;
+        }
+        for (const MeshCollisionGeometry& mesh : meshOriginalProfile_.profile.meshes) {
+            if (QFileInfo(QString::fromStdString(mesh.path)).fileName().compare(fileName, Qt::CaseInsensitive) == 0) {
+                return &mesh;
+            }
+        }
+        return nullptr;
+    };
 
     if (assetsDirectory_.isEmpty()) {
         loadErrors << QStringLiteral(
             "Could not find the Nachi runtime asset directory. Build from the repository "
-            "root or keep the STL assets under `presets/Nachi/MZ04`.");
+            "root or keep the STL assets under `%1`.").arg(assetsRelativeDir);
+    } else if (spec.visualPlacementFromMeshProfile && !meshOriginalProfile_.valid) {
+        loadErrors << QStringLiteral(
+            "This robot places its STL meshes from the mesh collision profile, but that profile "
+            "is unavailable: %1").arg(meshOriginalProfile_.note);
     } else {
         const JointVector homeJoints = JointVector::fromDegrees(
             {homeDegrees(config_)[0], homeDegrees(config_)[1], homeDegrees(config_)[2],
@@ -752,13 +884,31 @@ void MainWindow::loadRobotVisuals()
         const FkChain homeChain = ForwardKinematics::computeChain(config_, homeJoints);
         vtkSmartPointer<vtkNamedColors> colors = vtkSmartPointer<vtkNamedColors>::New();
 
-        for (const RobotVisualPartSpec& spec : kRobotParts) {
-            const QString meshPath = QDir(assetsDirectory_).filePath(QString::fromLatin1(spec.fileName));
+        for (std::size_t partIndex = 0; partIndex < spec.partCount; ++partIndex) {
+            const RobotVisualPartSpec& part = spec.parts[partIndex];
+            const QString meshPath = QDir(assetsDirectory_).filePath(QString::fromLatin1(part.fileName));
             QFileInfo meshInfo(meshPath);
             if (!meshInfo.exists() || !meshInfo.isFile()) {
                 loadErrors << QStringLiteral("%1 mesh is missing: %2")
-                                  .arg(QString::fromLatin1(spec.displayName), meshPath);
+                                  .arg(QString::fromLatin1(part.displayName), meshPath);
                 continue;
+            }
+
+            // Placement: MZ04D uses the hand-tuned correction table; mesh-profile robots use
+            // FK(link) * meshToLink, expressed as a home-relative correction so the existing
+            // visualDeltaMatrixMm() math applies unchanged.
+            const Pose homeLinkInBase = poseForLinkId(homeChain, part.linkId);
+            Pose homeVisualCorrection = visualHomeCorrectionForPartKey(QString::fromLatin1(part.key));
+            double stlScaleToMm = 1.0;
+            if (spec.visualPlacementFromMeshProfile) {
+                const MeshCollisionGeometry* profileMesh = findProfileMesh(QString::fromLatin1(part.fileName));
+                if (!profileMesh) {
+                    loadErrors << QStringLiteral("%1 has no entry in the mesh collision profile; skipped: %2")
+                                      .arg(QString::fromLatin1(part.displayName), meshPath);
+                    continue;
+                }
+                homeVisualCorrection = homeLinkInBase * profileMesh->meshToLink;
+                stlScaleToMm = profileMesh->scaleToMeters * 1000.0;
             }
 
             vtkSmartPointer<vtkSTLReader> reader = vtkSmartPointer<vtkSTLReader>::New();
@@ -767,7 +917,7 @@ void MainWindow::loadRobotVisuals()
 
             if (!reader->GetOutput() || reader->GetOutput()->GetNumberOfPoints() == 0) {
                 loadErrors << QStringLiteral("%1 mesh is unreadable or empty: %2")
-                                  .arg(QString::fromLatin1(spec.displayName), meshPath);
+                                  .arg(QString::fromLatin1(part.displayName), meshPath);
                 continue;
             }
 
@@ -776,7 +926,7 @@ void MainWindow::loadRobotVisuals()
 
             vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
             actor->SetMapper(mapper);
-            const auto baseColor = colors->GetColor3d(spec.colorName);
+            const auto baseColor = colors->GetColor3d(part.colorName);
             actor->GetProperty()->SetColor(baseColor[0], baseColor[1], baseColor[2]);
             actor->GetProperty()->SetInterpolationToPhong();
             actor->GetProperty()->SetSpecular(0.18);
@@ -803,11 +953,12 @@ void MainWindow::loadRobotVisuals()
             renderer_->AddActor(axisActor);
 
             VisualPartState state;
-            state.key = QString::fromLatin1(spec.key);
-            state.displayName = QString::fromLatin1(spec.displayName);
-            state.linkId = spec.linkId;
-            state.homeLinkInBase = poseForLinkId(homeChain, spec.linkId);
-            state.homeVisualCorrection = visualHomeCorrectionForPartKey(state.key);
+            state.key = QString::fromLatin1(part.key);
+            state.displayName = QString::fromLatin1(part.displayName);
+            state.linkId = part.linkId;
+            state.homeLinkInBase = homeLinkInBase;
+            state.homeVisualCorrection = homeVisualCorrection;
+            state.stlScaleToMm = stlScaleToMm;
             state.baseColorRgb = {baseColor[0], baseColor[1], baseColor[2]};
             state.jointAxisIndex = jointAxisIndexForPartKey(state.key);
             state.isLoaded = true;
@@ -863,21 +1014,20 @@ void MainWindow::updateSceneFromChain(const FkChain& chain)
 
         // This is the final place where each mesh's VTK transform is set.
         // If a specific exported STL is offset or rotated incorrectly, adjust
-        // its parameters in visualHomeCorrectionForPartKey() above.
+        // its parameters in visualHomeCorrectionForPartKey() above (MZ04D) or the
+        // meshToLink transform in the preset's mesh collision profile (MZ07F).
         const Pose currentLinkPose = poseForLinkId(chain, part.linkId);
-        const Eigen::Matrix4d matrixValues =
+        const Eigen::Matrix4d originMatrixValues =
             Robot3DVisualizer::visualDeltaMatrixMm(
                 currentLinkPose, part.homeLinkInBase, part.homeVisualCorrection);
+        // Only the mesh is scaled from its authored units into millimeters; the origin axes keep
+        // their fixed millimeter size.
+        Eigen::Matrix4d meshMatrixValues = originMatrixValues;
+        meshMatrixValues.block<3, 3>(0, 0) *= part.stlScaleToMm;
 
-        vtkSmartPointer<vtkMatrix4x4> matrix = vtkSmartPointer<vtkMatrix4x4>::New();
-        for (int row = 0; row < 4; ++row) {
-            for (int column = 0; column < 4; ++column) {
-                matrix->SetElement(row, column, matrixValues(row, column));
-            }
-        }
-        part.actor->SetUserMatrix(matrix);
+        part.actor->SetUserMatrix(toVtkMatrix(meshMatrixValues));
         if (part.originActor) {
-            part.originActor->SetUserMatrix(matrix);
+            part.originActor->SetUserMatrix(toVtkMatrix(originMatrixValues));
         }
         if (part.axisActor && part.axisSource && part.jointAxisIndex >= 0 &&
             part.jointAxisIndex < static_cast<int>(chain.joints.size())) {
@@ -1677,8 +1827,8 @@ void MainWindow::loadMeshCollisionProfiles()
     if (resolvedSimplified.isEmpty()) {
         meshSimplifiedProfile_.note = QStringLiteral(
             "Simplified mesh profile not found at `%1`. Run "
-            "scripts/run_mesh_simplification_nachi_msvc.bat to generate it.")
-            .arg(relativeSimplified);
+            "scripts/run_mesh_simplification_nachi_msvc.bat 10 0.4 %2 to generate it.")
+            .arg(relativeSimplified, robotModelId_);
         return;
     }
 
@@ -1746,6 +1896,12 @@ void MainWindow::loadCollisionProfile()
     Result<CollisionProfile> loadedProfile =
         Result<CollisionProfile>::failure(KinematicsStatus::InvalidRequest, "no collision profile attempted");
 
+    // Only MZ04D has a built-in C++ primitive profile; other robots must load their JSON profile.
+    const bool hasBuiltInFallback = robotModelSpec(robotModelId_).hasBuiltInCollisionFallback;
+    const QString fallbackText = hasBuiltInFallback
+                                     ? QStringLiteral("Falling back to the built-in conservative profile.")
+                                     : QStringLiteral("No built-in profile exists for this robot.");
+
     const auto metadataIt = config_.metadata.find("collisionProfile");
     if (metadataIt != config_.metadata.end()) {
         const QString relativePath = QString::fromStdString(metadataIt->second);
@@ -1757,15 +1913,25 @@ void MainWindow::loadCollisionProfile()
                                               .arg(QDir::toNativeSeparators(resolvedPath));
             } else {
                 collisionProfileNote_ =
-                    QStringLiteral("Failed to load %1 (%2). Falling back to the built-in conservative profile.")
+                    QStringLiteral("Failed to load %1 (%2). %3")
                         .arg(QDir::toNativeSeparators(resolvedPath),
-                             QString::fromStdString(loadedProfile.message));
+                             QString::fromStdString(loadedProfile.message),
+                             fallbackText);
             }
         } else {
             collisionProfileNote_ =
-                QStringLiteral("Preset metadata references `%1`, but the file was not found. Falling back to the built-in conservative profile.")
-                    .arg(relativePath);
+                QStringLiteral("Preset metadata references `%1`, but the file was not found. %2")
+                    .arg(relativePath, fallbackText);
         }
+    }
+
+    if (!loadedProfile.ok() && !hasBuiltInFallback) {
+        collisionProfileSource_ = QStringLiteral("Unavailable");
+        if (collisionProfileNote_.isEmpty()) {
+            collisionProfileNote_ = QStringLiteral("Preset metadata has no `collisionProfile` entry. %1")
+                                        .arg(fallbackText);
+        }
+        return;
     }
 
     if (!loadedProfile.ok()) {

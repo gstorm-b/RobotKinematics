@@ -54,7 +54,8 @@ SOURCES += \
     integration/FrameToolFkTests.cpp \
     integration/IKIntegrationTests.cpp \
     integration/Virtual6DofTestArmTests.cpp \
-    integration/NachiMZ04DTests.cpp
+    integration/NachiMZ04DTests.cpp \
+    integration/NachiMZ07FTests.cpp
 
 HEADERS += \
     unit/DhAdapterTests.h \
@@ -87,4 +88,5 @@ HEADERS += \
     integration/FrameToolFkTests.h \
     integration/IKIntegrationTests.h \
     integration/Virtual6DofTestArmTests.h \
-    integration/NachiMZ04DTests.h
+    integration/NachiMZ04DTests.h \
+    integration/NachiMZ07FTests.h

@@ -1,9 +1,12 @@
 @echo off
 REM ============================================================================
-REM Run the mesh simplification tool on the Nachi MZ04D mesh profile and emit
+REM Run the mesh simplification tool on a Nachi mesh profile and emit
 REM simplified STL meshes plus a paired simplified-profile JSON next to them.
 REM
-REM The simplified meshes land under presets/Nachi/MZ04/simplified/nachi_mz04d/
+REM Usage: run_mesh_simplification_nachi_msvc.bat [voxelCount] [safetyFactor] [MZ04D|MZ07F]
+REM   (defaults: 10, 0.4, MZ04D)
+REM
+REM The simplified meshes land under presets/Nachi/<folder>/simplified/<profile>/
 REM and the simplified profile is written next to the original Nachi profile
 REM so MeshCollisionProfileJsonLoader resolves the relative paths consistently.
 REM ============================================================================
@@ -23,16 +26,30 @@ if not exist "%EXE%" (
 
 set "PATH=%QT_MSVC_DIR%\bin;%PATH%"
 
-set "INPUT=%ROOT%\presets\Nachi\MZ04\nachi_mz04d_mesh_collision.json"
-set "OUTPUT=%ROOT%\presets\Nachi\MZ04\nachi_mz04d_mesh_collision_simplified.json"
-set "MESH_OUTPUT_DIR=%ROOT%\presets\Nachi\MZ04\simplified\nachi_mz04d"
 set "VOXEL_COUNT=10"
 set "SAFETY_FACTOR=0.4"
+set "MODEL=MZ04D"
 
 if not "%~1"=="" set "VOXEL_COUNT=%~1"
 if not "%~2"=="" set "SAFETY_FACTOR=%~2"
+if not "%~3"=="" set "MODEL=%~3"
+
+if /i "%MODEL%"=="MZ04D" (
+    set "PRESET_DIR=%ROOT%\presets\Nachi\MZ04"
+    set "PROFILE=nachi_mz04d"
+) else if /i "%MODEL%"=="MZ07F" (
+    set "PRESET_DIR=%ROOT%\presets\Nachi\MZ07F"
+    set "PROFILE=nachi_mz07f"
+) else (
+    echo [ERROR] Unknown model "%MODEL%". Use MZ04D or MZ07F.
+    exit /b 1
+)
+
+set "INPUT=%PRESET_DIR%\%PROFILE%_mesh_collision.json"
+set "OUTPUT=%PRESET_DIR%\%PROFILE%_mesh_collision_simplified.json"
+set "MESH_OUTPUT_DIR=%PRESET_DIR%\simplified\%PROFILE%"
 
 "%EXE%" --input-profile "%INPUT%" --output-profile "%OUTPUT%" --mesh-output-dir "%MESH_OUTPUT_DIR%" --voxel-count %VOXEL_COUNT% --safety-factor %SAFETY_FACTOR% || ( echo [ERROR] mesh simplification run failed & exit /b 1 )
 
-echo [OK] Nachi mesh simplification run complete.
+echo [OK] Nachi %MODEL% mesh simplification run complete.
 exit /b 0

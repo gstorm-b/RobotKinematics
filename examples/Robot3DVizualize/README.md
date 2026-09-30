@@ -31,22 +31,17 @@ For agent handoff, read [AGENTS.md](AGENTS.md) and [HANDOFF.md](HANDOFF.md).
 - MSVC toolchain.
 - VTK built for the same compiler and Qt version family.
 
-Set these environment variables before building:
+Set `VTK_ROOT` and `VTK_VERSION` in the machine-local `qmake/local_paths.pri` (copy it from
+`qmake/local_paths.pri.example`); both Qt Creator and the build scripts read it:
 
-```bat
-set VTK_ROOT=D:\Project\vtk_build\vtk\install-x64-cuda-qt-vs
-set VTK_VERSION=9.6
+```pro
+isEmpty(VTK_ROOT):    VTK_ROOT    = "C:/build_packages/vtk/install-x64-cuda-qt"
+isEmpty(VTK_VERSION): VTK_VERSION = 9.6
 ```
 
-The MSVC build script uses `D:\Project\vtk_build\vtk\install-x64-cuda-qt-vs` automatically when `VTK_ROOT` is not set and that directory exists.
-
-Optional overrides:
-
-```bat
-set VTK_INCLUDEPATH=D:\Project\vtk_build\vtk\install-x64-cuda-qt-vs\include\vtk-9.6
-set VTK_LIBPATH=C:\path\to\vtk-install\lib
-set VTK_BINPATH=C:\path\to\vtk-install\bin
-```
+`VTK_INCLUDEPATH`, `VTK_LIBPATH`, `VTK_BINPATH` and `VTK_LIB_SUFFIX` are optional overrides that
+can be set in the same file. An environment variable or qmake argument with the same name takes
+precedence over the file.
 
 ## Build
 
@@ -58,18 +53,59 @@ scripts\build_example_robot3dvisualize_msvc.bat
 
 The example build script now builds the core `RobotKinematics` library first, because the visualizer links against the repository static library instead of duplicating solver code.
 
-If `VTK_ROOT` is not set and the default local VTK path does not exist, the script fails before qmake with a clear message. This is expected on machines without VTK installed.
+If `VTK_ROOT` is not set, qmake stops with a message pointing to `qmake/local_paths.pri`. This is expected on machines without VTK installed.
 
 VTK must be built with Qt support so `QVTKOpenGLNativeWidget.h` and `vtkGUISupportQt-<version>.lib` are available.
 
 The current local VTK install also includes `vtkSTLReader.h` and `vtkIOGeometry-9.6.lib`, so Phase 1 should use STL assets directly.
 
-## Run
+## Robot Models
 
-After building, make sure Qt and VTK runtime DLL directories are on `PATH` before launching:
+The **Robot model** selector switches between Nachi MZ04D (default) and Nachi MZ07F; switching
+reopens the window with that preset, its STL meshes, and its collision profiles. To start
+directly on MZ07F:
 
 ```bat
-set PATH=C:\Qt\6.8.2\msvc2022_64\bin;D:\Project\vtk_build\vtk\install-x64-cuda-qt-vs\bin;%PATH%
+examples\Robot3DVizualize\build\msvc\release\Robot3DVizualize.exe --robot MZ07F
+```
+
+MZ07F meshes are placed from the `meshToLink` transforms in
+`presets/Nachi/MZ07F/nachi_mz07f_mesh_collision.json`, so the rendered STL and the mesh
+collision geometry always agree.
+
+## Mesh Collision Modes
+
+The Collision tab's **Mode** list shows `Mesh - Original STL` and `Mesh - Simplified STL` only when
+the example is linked against the Coal-enabled RobotKinematics library **and** the selected robot's
+mesh profile loads and validates. Otherwise only `Primitive (sphere/capsule)` is listed; the
+`Mesh backend`, `Mesh original profile` and `Mesh simplified profile` rows on that tab say why.
+This applies to every robot model, MZ04D and MZ07F alike.
+
+From the scripts:
+
+```bat
+scripts\build_msvc_mesh_coal.bat
+scripts\build_example_robot3dvisualize_mesh_coal_msvc.bat
+rem Simplified profiles are generated, not tracked:
+scripts\run_mesh_simplification_nachi_msvc.bat 10 0.4 MZ04D
+scripts\run_mesh_simplification_nachi_msvc.bat 10 0.4 MZ07F
+```
+
+From Qt Creator, build and run the configuration whose qmake arguments include
+`CONFIG+=robotkinematics_mesh_collision MESH_COLLISION_BACKEND=coal` and
+`ROBOTKINEMATICS_LIB_DIR=<repo>/build/msvc_mesh_coal/lib` (build the Coal library first with
+`scripts\build_msvc_mesh_coal.bat`). Coal/Boost/Assimp roots come from `qmake/local_paths.pri`.
+Keep **Add build library search path to PATH** enabled in the run settings: the Coal DLL
+directories are exported as library search paths so the run finds `coal.dll`.
+
+## Run
+
+After building, put Qt on `PATH` and call the generated `robotkinematics_runtime_env.bat`, which adds
+the VTK (and, for the Coal build, Coal/Boost/Assimp) DLL directories resolved by qmake:
+
+```bat
+set PATH=C:\Qt\6.11.1\msvc2022_64\bin;%PATH%
+call examples\Robot3DVizualize\build\msvc\robotkinematics_runtime_env.bat
 examples\Robot3DVizualize\build\msvc\release\Robot3DVizualize.exe
 ```
 

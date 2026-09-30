@@ -1,6 +1,7 @@
 #include "NachiMZ04DTests.h"
 
 #include <RobotKinematics/Kinematics/ForwardKinematics.h>
+#include <RobotKinematics/Kinematics/JointLimitValidator.h>
 #include <RobotKinematics/Kinematics/SerialRobotKinematics.h>
 #include <RobotKinematics/Model/RobotModelValidator.h>
 #include <RobotKinematics/Posture/PostureResolver.h>
@@ -16,6 +17,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 using namespace RobotKinematics;
 
@@ -130,6 +132,71 @@ void NachiMZ04DTests::jsonPresetMatchesCppFallbackForSolverFacingFields()
         QVERIFY(std::abs(json.joints[i].limits->lower - fallback.joints[i].limits->lower) <= 1e-9);
         QVERIFY(std::abs(json.joints[i].limits->upper - fallback.joints[i].limits->upper) <= 1e-9);
     }
+
+    QCOMPARE(json.frames.userFrames.size(), fallback.frames.userFrames.size());
+    for (std::size_t i = 0; i < fallback.frames.userFrames.size(); ++i) {
+        QCOMPARE(json.frames.userFrames[i].id, fallback.frames.userFrames[i].id);
+        QCOMPARE(json.frames.userFrames[i].parentLinkId, fallback.frames.userFrames[i].parentLinkId);
+        QVERIFY(poseNear(json.frames.userFrames[i].transform, fallback.frames.userFrames[i].transform));
+    }
+
+    QCOMPARE(json.tools.size(), fallback.tools.size());
+    for (std::size_t i = 0; i < fallback.tools.size(); ++i) {
+        QCOMPARE(json.tools[i].id, fallback.tools[i].id);
+        QVERIFY(poseNear(json.tools[i].flangeToTcp, fallback.tools[i].flangeToTcp));
+    }
+}
+
+void NachiMZ04DTests::jointLimitsFollowTeachPendantNotManual()
+{
+    // docs/preset_references/nachi-mz04d.md: the preset uses the teach-pendant limits. The
+    // official manual lists J2 (-145, 90) and J3 (-125, 280), which the pendant does not accept.
+    const std::array<std::array<double, 2>, 6> pendantLimitsDeg = {{
+        {-170.0, 170.0},
+        {-55.0, 180.0},
+        {-70.0, 190.0},
+        {-190.0, 190.0},
+        {-120.0, 120.0},
+        {-360.0, 360.0},
+    }};
+
+    const Result<SerialRobotConfig> loaded = PresetJsonLoader::loadFile(nachiPresetPath());
+    QVERIFY2(loaded.ok(), loaded.message.c_str());
+
+    for (const SerialRobotConfig& config : {Presets::nachiMZ04D(), loaded.value}) {
+        QCOMPARE(config.joints.size(), pendantLimitsDeg.size());
+        for (std::size_t i = 0; i < pendantLimitsDeg.size(); ++i) {
+            QVERIFY(config.joints[i].limits.has_value());
+            QVERIFY(std::abs(config.joints[i].limits->lower * kRadToDeg - pendantLimitsDeg[i][0]) <= 1e-9);
+            QVERIFY(std::abs(config.joints[i].limits->upper * kRadToDeg - pendantLimitsDeg[i][1]) <= 1e-9);
+        }
+    }
+
+    // Every joint vector read from the pendant must be accepted by the preset limits.
+    const SerialRobotConfig config = Presets::nachiMZ04D();
+    std::vector<std::array<double, 6>> pendantJointsDeg;
+    for (const TeachPoint& p : kTeachPoints) {
+        pendantJointsDeg.push_back(p.jointsDeg);
+    }
+    pendantJointsDeg.push_back({25.5519, -22.283, 174.08, -0.767464, 29.1492, 155.426});
+    pendantJointsDeg.push_back({23.124, -18.8593, 164.056, -0.569853, 35.8219, 157.649});
+    pendantJointsDeg.push_back({-26.3452, -22.0674, 173.422, 1.03631, 29.5313, 205.746});
+    pendantJointsDeg.push_back({-23.4909, -17.9565, 161.556, 0.77206, 37.3102, 203.18});
+    for (const std::array<double, 6>& jointsDeg : pendantJointsDeg) {
+        const JointVector q = JointVector::fromDegrees({jointsDeg[0], jointsDeg[1], jointsDeg[2],
+                                                        jointsDeg[3], jointsDeg[4], jointsDeg[5]});
+        QVERIFY(JointLimitValidator::validate(config, q).ok());
+    }
+
+    // Values allowed by the manual but outside the pendant range must be rejected.
+    const JointVector manualOnlyJ2 = JointVector::fromDegrees({0.0, -100.0, 0.0, 0.0, 0.0, 0.0});
+    const JointVector manualOnlyJ3 = JointVector::fromDegrees({0.0, 0.0, 250.0, 0.0, 0.0, 0.0});
+    QCOMPARE(JointLimitValidator::validate(config, manualOnlyJ2).status, KinematicsStatus::JointLimitViolation);
+    QCOMPARE(JointLimitValidator::validate(config, manualOnlyJ3).status, KinematicsStatus::JointLimitViolation);
+
+    // Pendant-valid J2 beyond the old (-90, 145) preset range must be accepted.
+    const JointVector pendantOnlyJ2 = JointVector::fromDegrees({0.0, 170.0, 0.0, 0.0, 0.0, 0.0});
+    QVERIFY(JointLimitValidator::validate(config, pendantOnlyJ2).ok());
 }
 
 void NachiMZ04DTests::forwardKinematicsMatchesTeachPendantPoses()

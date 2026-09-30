@@ -8,11 +8,12 @@ The library supports forward kinematics, inverse kinematics, joint-limit validat
 
 The base serial 6DOF library milestone is implemented. The codebase includes the Qt/qmake static library, Qt Test runner, core units and `Pose`, canonical serial robot model, model validation, joint-limit validation, frame/tool registries, FK, numerical IK, posture-aware solution selection, JSON preset loading, `Virtual6DofTestArm`, standard DH import, URDF-like import/export, and a hybrid analytic IK plugin for supported spherical-wrist 6R robots.
 
-Primitive self-collision detection is implemented as a fast approximate/debug path. Phase 10 mesh collision is also implemented behind optional qmake flags: backend-neutral mesh profile types/loaders, STL mesh normalization, a default no-backend `UnsupportedSolver` path, an optional Coal adapter, the Nachi MZ04D original STL mesh profile, offline voxel-grid simplification tooling, and a Qt/VTK visualizer mode selector are in place. See [docs/planning/mesh_collision_backend_plan.md](docs/planning/mesh_collision_backend_plan.md) and [docs/planning/mesh_collision_backend_spike.md](docs/planning/mesh_collision_backend_spike.md).
+Primitive self-collision detection is implemented as a fast approximate/debug path. Phase 10 mesh collision is also implemented behind optional qmake flags: backend-neutral mesh profile types/loaders, STL mesh normalization, a default no-backend `UnsupportedSolver` path, an optional Coal adapter, the Nachi MZ04D and MZ07F original STL mesh profiles, offline voxel-grid simplification tooling, and a Qt/VTK visualizer mode selector are in place. See [docs/planning/mesh_collision_backend_plan.md](docs/planning/mesh_collision_backend_plan.md) and [docs/planning/mesh_collision_backend_spike.md](docs/planning/mesh_collision_backend_spike.md).
 
 Real preset status:
 
 - `NachiMZ04D` is implemented from teach-pendant reference data in [docs/preset_references/nachi-mz04d.md](docs/preset_references/nachi-mz04d.md), with JSON and C++ fallback presets.
+- `NachiMZ07F` is implemented from teach-pendant reference data and the vendor STEP assembly in [docs/preset_references/nachi-mz07f.md](docs/preset_references/nachi-mz07f.md), with JSON and C++ fallback presets. Its 50 mm shoulder offset means IK uses the numerical solver.
 - `KawasakiRS007N` is not implemented yet. Task 6.1 remains blocked until verified dimensions, joint limits, posture rules, and source references are provided. See [docs/preset_references/kawasaki-rs007n.md](docs/preset_references/kawasaki-rs007n.md).
 
 ## Start Here
@@ -41,7 +42,7 @@ No-UI examples:
 
 Visualizer example:
 
-- [examples/Robot3DVizualize](examples/Robot3DVizualize/README.md): Qt 6 + VTK interactive Nachi MZ04D viewer with primitive and optional mesh collision modes. VTK remains example-only.
+- [examples/Robot3DVizualize](examples/Robot3DVizualize/README.md): Qt 6 + VTK interactive Nachi MZ04D / MZ07F viewer with primitive and optional mesh collision modes. VTK remains example-only.
 
 ## Core Decisions
 
@@ -73,7 +74,7 @@ The first milestone is complete when:
 
 Current IK limitation: numerical `solveAll` returns found solutions from deterministic seeds, not a mathematically exhaustive branch set. IK reference user frames must currently be fixed to the base link.
 
-Kawasaki RS007N remains blocked until verified dimensions, joint limits, posture rules, and source references are provided. Nachi MZ04D is implemented, with documented caveats around posture-source confidence.
+Kawasaki RS007N remains blocked until verified dimensions, joint limits, posture rules, and source references are provided. Nachi MZ04D and MZ07F are implemented, with documented caveats around posture-source confidence (MZ07F posture rules are assumed from MZ04D).
 
 Canonical serial configs may contain fixed joints; `dof` counts movable joints only.
 

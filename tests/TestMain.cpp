@@ -33,6 +33,7 @@ int runNachiMeshCollisionTests(int argc, char** argv);
 int runIKIntegrationTests(int argc, char** argv);
 int runVirtual6DofTestArmTests(int argc, char** argv);
 int runNachiMZ04DTests(int argc, char** argv);
+int runNachiMZ07FTests(int argc, char** argv);
 int runAnalyticIKSolverTests(int argc, char** argv);
 int runUrdfAdapterTests(int argc, char** argv);
 
@@ -93,6 +94,7 @@ int main(int argc, char** argv)
         {"IKIntegrationTests", runIKIntegrationTests},
         {"Virtual6DofTestArmTests", runVirtual6DofTestArmTests},
         {"NachiMZ04DTests", runNachiMZ04DTests},
+        {"NachiMZ07FTests", runNachiMZ07FTests},
         {"AnalyticIKSolverTests", runAnalyticIKSolverTests},
         {"UrdfAdapterTests", runUrdfAdapterTests},
     };

@@ -3,8 +3,7 @@ REM ============================================================================
 REM Incremental OUT-OF-SOURCE MSVC build for RobotKinematics.
 REM
 REM Handles the build traps:
-REM   - Eigen headers come from EIGEN_INCLUDE_DIR (see eigen.pri; default is the
-REM     PCL 1.15.1 Eigen 3.4.0 install).
+REM   - Eigen headers come from EIGEN_INCLUDE_DIR in qmake/local_paths.pri.
 REM   - Builds out-of-source so in-source artifacts never contaminate it.
 REM   - Does NOT redirect vcvars64 output (redirecting breaks its SDK setup).
 REM

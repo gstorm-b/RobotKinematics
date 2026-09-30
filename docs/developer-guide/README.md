@@ -83,7 +83,8 @@ include/RobotKinematics/   Public headers (this is your include root)
   Adapters/                DhAdapter, UrdfAdapter
 src/                       Implementations (mirror of include/)
 presets/                   JSON presets (robot-kinematics-preset/v1)
-eigen.pri                  Locates the external Eigen headers (EIGEN_INCLUDE_DIR)
+eigen.pri                  Adds the external Eigen headers (EIGEN_INCLUDE_DIR)
+qmake/                     Third-party path resolution; local_paths.pri is machine-local
 tests/                     Qt Test unit + integration suites
 ```
 

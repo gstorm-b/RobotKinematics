@@ -138,8 +138,8 @@ mesh collision is available only when the optional Coal adapter is compiled; oth
 still return a structured unsupported result. Coal/FCL/VTK/Open3D/CGAL/libigl types must not leak
 into public headers. Mesh assets must declare source units, `scaleToMeters`, and explicit
 `meshToLink` transforms. Relative mesh paths loaded from mesh-profile files resolve against the
-profile JSON directory. Optional backend dependencies (Coal, Assimp, Boost) come from prebuilt
-installs under `C:\build_packages`, and Eigen comes from `EIGEN_INCLUDE_DIR` (see `eigen.pri`).
+profile JSON directory. All third-party paths (Eigen, Coal/Boost/Assimp, VTK) are declared in the
+machine-local `qmake/local_paths.pri` (copy it from `qmake/local_paths.pri.example`).
 
 ## Source Layout
 
@@ -214,9 +214,8 @@ Build output convention:
 - core/library/test builds live under repository-root `build/` (`build/msvc`, `build/mingw`,
   `build/msvc_mesh_coal`, and `build/tools`);
 - example builds live under the example folder, e.g. `examples/Robot3DVizualize/build/msvc`;
-- third-party dependencies live outside the repository: Coal/Assimp/Boost installs under
-  `BUILD_PACKAGES_ROOT` (default `C:\build_packages\<name>-<version>`), Eigen under
-  `EIGEN_INCLUDE_DIR` (default PCL 1.15.1's Eigen 3.4.0);
+- third-party dependencies live outside the repository; their paths are declared only in
+  `qmake/local_paths.pri` (precedence: qmake command line > environment > that file);
 - Nachi MZ04D preset, STL assets, primitive profile, and mesh profile live together under
   `presets/Nachi/MZ04`.
 
